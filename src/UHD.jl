@@ -33,6 +33,8 @@ include("Rx.jl");
 export UhdRxWrapper
 # Export functions 
 export initRxUHD; 
+export setRxRadio;
+export freeUSRP;
 
 
 # ---------------------------------------------------- 
