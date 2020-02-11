@@ -3,7 +3,7 @@
 
 ## Purpose 
 
-This simple package proposes some bindings to the UHD, the C driver of the Universaa Software Radio Peripheral [USRP](https://files.ettus.com/manual/) 
+This simple package proposes some bindings to the UHD, the C driver of the Universal Software Radio Peripheral [USRP](https://files.ettus.com/manual/) 
 
 The purpose is to able to see the radio peripheral inside a Julia session and to be able to send and receive complex samples direclty within a Julia session. 
 
@@ -13,22 +13,25 @@ For instance, in order to get 4096 samples at 868MHz with a instantaneous bandwi
 		# ---------------------------------------------------- 
 		# --- Physical layer and RF parameters 
 		# ---------------------------------------------------- 
-		carrierFreq		= 770e6;		
-		samplingRate	= 16e6; 
-		rxGain			= 50.0; 
-		nbSamples		= 4096;
+		carrierFreq		= 770e6;	    % --- The carrier frequency 	
+		samplingRate	= 16e6;         % --- Targeted badnwdith 
+		rxGain			= 50.0;         % --- Rx gain 
+		nbSamples		= 4096;         % --- Desired number of samples
 	
 		# ---------------------------------------------------- 
 		# --- Getting all system with function calls  
 		# ---------------------------------------------------- 
-		uhd		= initRxUHD("");
-		x310	= setRxRadio(uhd,carrierFreq,samplingRate,rxGain)
+		% --- Creating the radio ressource 
+		% The first parameter is for specific parameter (FPGA bitstream, IP address)
+		radio	= setRxRadio("",carrierFreq,samplingRate,rxGain);
 		try 
+		        % --- Display the current radio configuration
 				printRxConfig(x310)
-				sigAll = getRxBuffer(x310,nbSamples)
+				% --- Getting a buffe from the radio 
+				sigAll	= getBuffer(radio,nbSamples);
 		catch exception;
 			@printf("Releasing UHD ressources \n");
-			freeRxUHD(x310); 
+			freeRadio(radio); 
 			rethrow(exception);
 		end
 	end
