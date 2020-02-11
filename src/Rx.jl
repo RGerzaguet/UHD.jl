@@ -13,13 +13,6 @@ struct Buffer
 	pointerSamples::Ref{Csize_t};
 end
 
-
-#
-#
-#Base.unsafe_convert(T::Type{Ptr{Ptr{Cvoid}}}, t::Base.RefValue{Array{Float32,1}}) = t;
-#Base.unsafe_convert(::Type{Ptr{Ptr{Cvoid}}}, obj::Base.RefValue{Array{Float32,1}}) = Base.cconvert(Ptr{Ptr{Cvoid}},pointer_from_objref(obj));
-
-
 # Direclry inherited from C file tune_request.h
 @enum uhd_tune_request_policy_t begin 
 	UHD_TUNE_REQUEST_POLICY_NONE=78;
@@ -143,7 +136,7 @@ Init the core parameter of the radio and intiate RF parameters
 --- Syntax 
 setRxRadio(uhd,carrierFreq,samplingRate,rxGain,antenna="TX/RX")
 # --- Input parameters 
-- uhd	  : UHD object set from initRxUHD [UhdRxWrapper] 
+- sysImage	  : String with the additionnal load parameters (for instance, path to the FPHGA image) [String]
 - carrierFreq	: Desired Carrier frequency [Union{Int,Float64}] 
 - samplingRate	: Desired bandwidth [Union{Int,Float64}] 
 - rxGain		: Desired Rx Gain [Union{Int,Float64}] 
@@ -153,7 +146,11 @@ setRxRadio(uhd,carrierFreq,samplingRate,rxGain,antenna="TX/RX")
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function setRxRadio(uhd,carrierFreq,samplingRate,rxGain,antenna="TX/RX")
+function setRxRadio(sysImage,carrierFreq,samplingRate,rxGain,antenna="TX/RX")
+	# ---------------------------------------------------- 
+	# --- Init  UHD object  
+	# ---------------------------------------------------- 
+	uhd	  = initRxUHD(sysImage);
 	# ---------------------------------------------------- 
 	# --- Creating Runtime structures  
 	# ---------------------------------------------------- 
@@ -470,18 +467,19 @@ Get a single buffer from the USRP device, using the Buffer structure
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function getBuffer!(sig::Array{Complex},radio::UHDRx,buffer::Buffer)
+function getBuffer!(sig::Array{Complex{Cfloat}},radio::UHDRx,buffer::Buffer)
 	# --- Defined parameters for multiple buffer reception 
-	filled	= false;
-	posT	= 1;
+	filled		= false;
+	posT		= 0;
+	nbSamples	= length(sig);
 	while !filled 
 		# --- Get a buffer 
 		cSamples  = populateBuffer!(buffer,radio);
 		(posT+cSamples  > nbSamples) ? n = nbSamples - posT : n = cSamples;
 		# --- Populate the complete buffer 
-		sigRx[posT .+(1:n)] .= buffer.x[1:2:end] .+ 1im*buffer.x[2:2:end];
+		sig[posT .+ (1:n)] .= buffer.x[1:2:2n] .+ 1im*buffer.x[2:2:2n];
 		# --- Update counters 
-		posT += nS; 
+		posT += n; 
 		# --- Breaking flag
 		(posT == nbSamples) ? filled=true : filled = false;
 	end
@@ -504,5 +502,5 @@ function populateBuffer!(buffer::Buffer,radio)
 	# --- Callling the receive lib.
 	ccall((:uhd_rx_streamer_recv, libUHD), Cvoid,(Ptr{uhd_rx_streamer},Ptr{Ptr{Cvoid}},Csize_t,Ptr{Ptr{uhd_rx_metadata}},Cfloat,Cint,Ref{Csize_t}),radio.uhd.pointerStreamer,buffer.ptr,radio.packetSize,buffer.md,3.0,false,buffer.pointerSamples);
 	# --- Pointer deferencing  -> ÷2 for Complex output
-	return (buffer.pointerSamples[]÷2);
+	return Int(buffer.pointerSamples[]);
 end 
