@@ -98,33 +98,27 @@ function initRxUHD(sysImage)
 	# --- Handler  
 	# ---------------------------------------------------- 
 	# --- Create a pointer related to the incoming USRP 
-	usrpPointer = Array{Ptr{uhd_usrp},1}(undef,1); 
+	usrpPointer = Array{uhd_usrp,1}(undef,1);
 	# --- Cal the init
-	ccall((:uhd_usrp_make, libUHD), Cvoid, (Ptr{Ptr{uhd_usrp}}, Cstring),usrpPointer,sysImage);
-	# --- Recover the USRP
-	usrp	  = usrpPointer[1];
+	ccall((:uhd_usrp_make, libUHD), Cvoid, (Ptr{uhd_usrp}, Cstring),usrpPointer,sysImage);
 	# ---------------------------------------------------- 
 	# --- Rx Streamer  
 	# ---------------------------------------------------- 
 	# --- Create a pointer related to the Rx streamer
-	streamerPointer = Array{Ptr{uhd_rx_streamer},1}(undef,1); 
+	streamerPointer = Array{uhd_rx_streamer,1}(undef,1);
 	# --- Cal the init
-	ccall((:uhd_rx_streamer_make, libUHD), Cvoid, (Ptr{Ptr{uhd_rx_streamer}},),streamerPointer);
-	# --- Recover the streamer
-	streamer  = streamerPointer[1];
+	ccall((:uhd_rx_streamer_make, libUHD), Cvoid, (Ptr{uhd_rx_streamer},),streamerPointer);
 	# ---------------------------------------------------- 
 	# --- Rx Metadata  
 	# ---------------------------------------------------- 
 	# --- Create a pointer related to Metadata 
-	metadataPointer = Array{Ptr{uhd_rx_metadata},1}(undef,1); 
+	metadataPointer = Array{uhd_rx_metadata,1}(undef,1); 
 	# --- Cal the init
-	ccall((:uhd_rx_metadata_make, libUHD), Cvoid, (Ptr{Ptr{uhd_rx_metadata}},),metadataPointer);
-	# --- Recover Metadata
-	metadata = metadataPointer[1];
+	ccall((:uhd_rx_metadata_make, libUHD), Cvoid, (Ptr{uhd_rx_metadata},),metadataPointer);
 	# ---------------------------------------------------- 
 	# --- Create the USRP wrapper object  
 	# ---------------------------------------------------- 
-	uhd  = UhdRxWrapper(usrp,streamer,metadata,usrpPointer,streamerPointer,metadataPointer);
+	uhd  = UhdRxWrapper(usrpPointer,streamerPointer,metadataPointer);
 	@info("Done init \n");
 	return uhd;
 end
@@ -167,10 +161,10 @@ function setRxRadio(sysImage,carrierFreq,samplingRate,rxGain,antenna="TX/RX")
 	# --- Sampling rate configuration  
 	# ---------------------------------------------------- 
 	# --- Update the Rx sampling rate 
-	ccall((:uhd_usrp_set_rx_rate, libUHD), Cvoid, (Ptr{uhd_usrp}, Cdouble, Csize_t),uhd.pointerUSRP,samplingRate,0);
+	ccall((:uhd_usrp_set_rx_rate, libUHD), Cvoid, (uhd_usrp, Cdouble, Csize_t),uhd.pointerUSRP[1],samplingRate,0);
 	# --- Get the Rx rate from the radio 
 	pointerRate  = Ref{Cdouble}(0);
-	ccall((:uhd_usrp_get_rx_rate, libUHD), Cvoid, (Ptr{uhd_usrp}, Csize_t, Ref{Cdouble}),uhd.pointerUSRP,0,pointerRate);
+	ccall((:uhd_usrp_get_rx_rate, libUHD), Cvoid, (uhd_usrp, Csize_t, Ref{Cdouble}),uhd.pointerUSRP[1],0,pointerRate);
 	updateRate  = pointerRate[];	
 	# --- Print a flag 
 	if updateRate != samplingRate 
@@ -178,60 +172,59 @@ function setRxRadio(sysImage,carrierFreq,samplingRate,rxGain,antenna="TX/RX")
 	else 
 		@info "Effective Rate is $(updateRate/1e6) MHz\n";
 	end
-	# ---------------------------------------------------- 
-	# --- Carrier Frequency configuration  
-	# ---------------------------------------------------- 
-	tunePointer	  = Ref{uhd_tune_request_t}(tuneRequest);	
-	pointerTuneResult	  = Ref{uhd_tune_result}();	
-	ccall((:uhd_usrp_set_rx_freq, libUHD), Cvoid, (Ptr{uhd_usrp}, Ptr{uhd_tune_request_t}, Csize_t, Ptr{uhd_tune_result}),uhd.pointerUSRP,tunePointer,0,pointerTuneResult);
-	pointerCarrierFreq = Ref{Cdouble}(0);
-	ccall((:uhd_usrp_get_rx_freq, libUHD), Cvoid, (Ptr{uhd_usrp}, Csize_t, Ref{Cdouble}),uhd.pointerUSRP,0,pointerCarrierFreq); 
-	updateCarrierFreq	= pointerCarrierFreq[];
-	if updateCarrierFreq != carrierFreq 
-		@warn "Effective carrier frequency is $(updateCarrierFreq/1e6) MHz and not $(carrierFreq/1e6) Hz\n" 
-	else 
-		@info "Effective carrier frequency is $(updateCarrierFreq/1e6) MHz\n";
-	end	
-	# ---------------------------------------------------- 
-	# --- Gain configuration  
-	# ---------------------------------------------------- 
-	# Update the UHD sampling rate 
-	ccall((:uhd_usrp_set_rx_gain, libUHD), Cvoid, (Ptr{uhd_usrp}, Cdouble, Csize_t, Cstring),uhd.pointerUSRP,rxGain,0,"");
-	# Get the updated gain from UHD 
-	pointerGain	  = Ref{Cdouble}(0);
-	ccall((:uhd_usrp_get_rx_gain, libUHD), Cvoid, (Ptr{uhd_usrp}, Csize_t, Cstring,Ref{Cdouble}),uhd.pointerUSRP,0,"",pointerGain);
-	updateGain	  = pointerGain[]; 
-	# --- Print a flag 
-	if updateGain != rxGain 
-		@warn "Effective gain is $(updateGain) dB and not $(rxGain) dB\n" 
-	else 
-		@info "Effective gain is $(updateGain) dB\n";
-	end 
-	# ---------------------------------------------------- 
-	# --- Antenna configuration 
-	# ---------------------------------------------------- 
-	ccall((:uhd_usrp_set_rx_antenna, libUHD), Cvoid, (Ptr{uhd_usrp}, Cstring, Csize_t),uhd.pointerUSRP,antenna,0);
-	# ---------------------------------------------------- 
-	# --- Setting up streamer  
-	# ---------------------------------------------------- 
-	# --- Setting up arguments 
-	pointerArgs	  = Ref{uhd_stream_args_t}(uhdArgs);
-	ccall((:uhd_usrp_get_rx_stream, libUHD), Cvoid, (Ptr{uhd_usrp},Ptr{uhd_stream_args_t},Ptr{uhd_rx_streamer}),uhd.pointerUSRP,pointerArgs,uhd.pointerStreamer);
-	# --- Getting number of samples ber buffer 
-	pointerSamples	  = Ref{Csize_t}(0);
-	ccall((:uhd_rx_streamer_max_num_samps, libUHD), Cvoid, (Ptr{uhd_stream_args_t},Ref{Csize_t}),uhd.pointerStreamer,pointerSamples);
-	nbSamples		  = pointerSamples[];	
-	# --- Issue stream command 
-	streamCmd	= stream_cmd(UHD_STREAM_MODE_START_CONTINUOUS,nbSamples,true,0,0.0);
-	pointerCmd	= Ref{stream_cmd}(streamCmd);
-	ccall((:uhd_rx_streamer_issue_stream_cmd, libUHD), Cvoid, (Ptr{uhd_stream_args_t},Ptr{stream_cmd}),uhd.pointerStreamer,pointerCmd);
-	# ---------------------------------------------------- 
-	# --- Create object and return  
-	# ---------------------------------------------------- 
-	# --- Return  
-	#FIXME free pointerCmd and not store it ?
-	#TODO Need to save tuneRequest // pointerTuneResult and uhdArgs
-	return UHDRx(uhd,updateCarrierFreq,updateRate,updateGain,antenna,nbSamples,0,uhdArgs,tuneRequest,pointerTuneResult,pointerCmd);
+	## ---------------------------------------------------- 
+	## --- Carrier Frequency configuration  
+	## ---------------------------------------------------- 
+	#tunePointer	  = Ref{uhd_tune_request_t}(tuneRequest);	
+	#pointerTuneResult	  = Ref{uhd_tune_result}();	
+	#ccall((:uhd_usrp_set_rx_freq, libUHD), Cvoid, (uhd_usrp, Ptr{uhd_tune_request_t}, Csize_t, Ptr{uhd_tune_result}),uhd.pointerUSRP[1],tunePointer,0,pointerTuneResult);
+	#pointerCarrierFreq = Ref{Cdouble}(0);
+	#ccall((:uhd_usrp_get_rx_freq, libUHD), Cvoid, (uhd_usrp, Csize_t, Ref{Cdouble}),uhd.pointerUSRP[1],0,pointerCarrierFreq); 
+	#updateCarrierFreq	= pointerCarrierFreq[];
+	#if updateCarrierFreq != carrierFreq 
+		#@warn "Effective carrier frequency is $(updateCarrierFreq/1e6) MHz and not $(carrierFreq/1e6) Hz\n" 
+	#else 
+		#@info "Effective carrier frequency is $(updateCarrierFreq/1e6) MHz\n";
+	#end	
+	## ---------------------------------------------------- 
+	## --- Gain configuration  
+	## ---------------------------------------------------- 
+	## Update the UHD sampling rate 
+	#ccall((:uhd_usrp_set_rx_gain, libUHD), Cvoid, (uhd_usrp, Cdouble, Csize_t, Cstring),uhd.pointerUSRP[1],rxGain,0,"");
+	## Get the updated gain from UHD 
+	#pointerGain	  = Ref{Cdouble}(0);
+	#ccall((:uhd_usrp_get_rx_gain, libUHD), Cvoid, (uhd_usrp, Csize_t, Cstring,Ref{Cdouble}),uhd.pointerUSRP[1],0,"",pointerGain);
+	#updateGain	  = pointerGain[]; 
+	## --- Print a flag 
+	#if updateGain != rxGain 
+		#@warn "Effective gain is $(updateGain) dB and not $(rxGain) dB\n" 
+	#else 
+		#@info "Effective gain is $(updateGain) dB\n";
+	#end 
+	## ---------------------------------------------------- 
+	## --- Antenna configuration 
+	## ---------------------------------------------------- 
+	#ccall((:uhd_usrp_set_rx_antenna, libUHD), Cvoid, (uhd_usrp, Cstring, Csize_t),uhd.pointerUSRP[1],antenna,0);
+	## ---------------------------------------------------- 
+	## --- Setting up streamer  
+	## ---------------------------------------------------- 
+	## --- Setting up arguments 
+	#pointerArgs	  = Ref{uhd_stream_args_t}(uhdArgs);
+	#ccall((:uhd_usrp_get_rx_stream, libUHD), Cvoid, (uhd_usrp,Ptr{uhd_stream_args_t},uhd_rx_streamer),uhd.pointerUSRP[1],pointerArgs,uhd.pointerStreamer[1]);
+	## --- Getting number of samples ber buffer 
+	#pointerSamples	  = Ref{Csize_t}(0);
+	#ccall((:uhd_rx_streamer_max_num_samps, libUHD), Cvoid, (uhd_rx_streamer,Ref{Csize_t}),uhd.pointerStreamer[1],pointerSamples);
+	#nbSamples		  = pointerSamples[];	
+	## --- Issue stream command 
+	#streamCmd	= stream_cmd(UHD_STREAM_MODE_START_CONTINUOUS,nbSamples,true,0,0.0);
+	#pointerCmd	= Ref{stream_cmd}(streamCmd);
+	#ccall((:uhd_rx_streamer_issue_stream_cmd, libUHD), Cvoid, (uhd_rx_streamer,Ptr{stream_cmd}),uhd.pointerStreamer[1],pointerCmd);
+	## ---------------------------------------------------- 
+	## --- Create object and return  
+	## ---------------------------------------------------- 
+	## --- Return  
+	##FIXME free pointerCmd and not store it ?
+	#return UHDRx(uhd,updateCarrierFreq,updateRate,updateGain,antenna,nbSamples,0,uhdArgs,tuneRequest,pointerTuneResult,pointerCmd);
 end
 
 """ 
@@ -251,11 +244,9 @@ function freeRadio(radio::UHDRx)
 	# There is one flag to avoid double free (that leads to seg fault) 
 	if radio.released == 0
 		# C Wrapper to ressource release 
-		ccall((:uhd_usrp_free, libUHD), Cvoid, (Ptr{Ptr{uhd_usrp}},),radio.uhd.addressUSRP);
-		#FIXME Should be Ptr{Ptr} ?
-		ccall((:uhd_rx_streamer_free, libUHD), Cvoid, (Ptr{uhd_rx_streamer},),radio.uhd.addressStream);
-		ccall((:uhd_usrp_free, libUHD), Cvoid, (Ptr{uhd_rx_metadata},),radio.uhd.addressMD);
-		@info "USRP device is now free.";
+		ccall((:uhd_usrp_free, libUHD), Cvoid, (Ptr{uhd_usrp},),uhd.uhd.pointerUSRP);
+		#ccall((:uhd_rx_streamer_free, libUHD), Cvoid, (Ptr{uhd_rx_streamer},),uhd.uhd.pointerStreamer);
+		#ccall((:uhd_usrp_free, libUHD), Cvoid, (Ptr{uhd_rx_metadata},),uhd.uhd.pointerMD);
 	else 
 		# print a warning  
 		@warn "UHD ressource was already released, abort call";
