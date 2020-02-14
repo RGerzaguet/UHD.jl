@@ -25,23 +25,6 @@ else
 	end
 end
 
-# Getting current lib folder to extract full paths of C executable
-libFolder	= @__DIR__;
-
-pathLibRx		= "$libFolder/../uhdRx.so";	  # Getting Rx library path 
-#pathLibTx		= "$libFolder/../uhdTx.so";	  # GettingTRx library path 
-
-
-function __init__()
-	# ---------------------------------------------------- 
-	# --- Loading librairies in __init__ 
-	# ---------------------------------------------------- 
-	global libRx		= Libdl.dlopen(pathLibRx);
-	#global libTx		= Libdl.dlopen(pathLibTx);
-end
-
-
-
 # ---------------------------------------------------- 
 # --- Receiver Configuration 
 # ---------------------------------------------------- 
