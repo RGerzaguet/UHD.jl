@@ -74,11 +74,12 @@ mutable struct UHDRx
 	antenna::String;
 	packetSize::Csize_t;
 	released::Int;
-	uhdArgs::uhd_stream_args_t;
-	tuneRequest::uhd_tune_request_t;
-	pointerTuneResult::Ref{uhd_tune_result};
 	pointerCmd::Ref{stream_cmd};
+	#uhdArgs::uhd_stream_args_t;
+	#tuneRequest::uhd_tune_request_t;
+	#pointerTuneResult::Ref{uhd_tune_result};
 end
+
 
 
 """ 
@@ -154,8 +155,6 @@ function setRxRadio(sysImage,carrierFreq,samplingRate,rxGain,antenna="TX/RX")
 	# ---------------------------------------------------- 
 	# --- Creating Runtime structures  
 	# ---------------------------------------------------- 
-	# --- Create structure for request 
-	tuneRequest	   = uhd_tune_request_t(carrierFreq,UHD_TUNE_REQUEST_POLICY_AUTO,UHD_TUNE_REQUEST_POLICY_AUTO);
 	# --- Create structure for UHD argument 
 	# TODO Adding custom levels here for user API
 	channel		   =  Ref{Csize_t}(0);
@@ -181,6 +180,8 @@ function setRxRadio(sysImage,carrierFreq,samplingRate,rxGain,antenna="TX/RX")
 	# ---------------------------------------------------- 
 	# --- Carrier Frequency configuration  
 	# ---------------------------------------------------- 
+	# --- Create structure for request 
+	tuneRequest	   = uhd_tune_request_t(carrierFreq,UHD_TUNE_REQUEST_POLICY_NONE,UHD_TUNE_REQUEST_POLICY_NONE);
 	tunePointer	  = Ref{uhd_tune_request_t}(tuneRequest);	
 	pointerTuneResult	  = Ref{uhd_tune_result}();	
 	ccall((:uhd_usrp_set_rx_freq, libUHD), Cvoid, (Ptr{uhd_usrp}, Ptr{uhd_tune_request_t}, Csize_t, Ptr{uhd_tune_result}),uhd.pointerUSRP,tunePointer,0,pointerTuneResult);
@@ -221,17 +222,14 @@ function setRxRadio(sysImage,carrierFreq,samplingRate,rxGain,antenna="TX/RX")
 	pointerSamples	  = Ref{Csize_t}(0);
 	ccall((:uhd_rx_streamer_max_num_samps, libUHD), Cvoid, (Ptr{uhd_stream_args_t},Ref{Csize_t}),uhd.pointerStreamer,pointerSamples);
 	nbSamples		  = pointerSamples[];	
-	# --- Issue stream command 
-	streamCmd	= stream_cmd(UHD_STREAM_MODE_START_CONTINUOUS,nbSamples,true,0,0.0);
+	# --- Create streamer master 
+	streamCmd	= stream_cmd(UHD_STREAM_MODE_NUM_SAMPS_AND_DONE,nbSamples,true,0,0.0);
 	pointerCmd	= Ref{stream_cmd}(streamCmd);
-	ccall((:uhd_rx_streamer_issue_stream_cmd, libUHD), Cvoid, (Ptr{uhd_stream_args_t},Ptr{stream_cmd}),uhd.pointerStreamer,pointerCmd);
 	# ---------------------------------------------------- 
 	# --- Create object and return  
 	# ---------------------------------------------------- 
 	# --- Return  
-	#FIXME free pointerCmd and not store it ?
-	#TODO Need to save tuneRequest // pointerTuneResult and uhdArgs
-	return UHDRx(uhd,updateCarrierFreq,updateRate,updateGain,antenna,nbSamples,0,uhdArgs,tuneRequest,pointerTuneResult,pointerCmd);
+	return UHDRx(uhd,updateCarrierFreq,updateRate,updateGain,antenna,nbSamples,0,pointerCmd);
 end
 
 """ 
@@ -499,8 +497,13 @@ populateBuffer!(buffer::Buffer,radio)
 # v 1.0 - Robin Gerzaguet.
 """
 function populateBuffer!(buffer::Buffer,radio)
-	# --- Callling the receive lib.
-	ccall((:uhd_rx_streamer_recv, libUHD), Cvoid,(Ptr{uhd_rx_streamer},Ptr{Ptr{Cvoid}},Csize_t,Ptr{Ptr{uhd_rx_metadata}},Cfloat,Cint,Ref{Csize_t}),radio.uhd.pointerStreamer,buffer.ptr,radio.packetSize,buffer.md,3.0,false,buffer.pointerSamples);
+	# --- Issue stream command 
+	ccall((:uhd_rx_streamer_issue_stream_cmd, libUHD), Cvoid, (Ptr{uhd_stream_args_t},Ptr{stream_cmd}),radio.uhd.pointerStreamer,radio.pointerCmd);
+	# --- Effectively recover data
+	ccall((:uhd_rx_streamer_recv, libUHD), Cvoid,(Ptr{uhd_rx_streamer},Ptr{Ptr{Cvoid}},Csize_t,Ptr{Ptr{uhd_rx_metadata}},Cfloat,Cint,Ref{Csize_t}),radio.uhd.pointerStreamer,buffer.ptr,radio.packetSize,buffer.md,10,false,buffer.pointerSamples);
+	#streamCmd	= stream_cmd(UHD_STREAM_MODE_STOP_CONTINUOUS,radio.packetSize,true,0,0.0);
+	#pointerCmd	= Ref{stream_cmd}(streamCmd);
+	#ccall((:uhd_rx_streamer_issue_stream_cmd, libUHD), Cvoid, (Ptr{uhd_stream_args_t},Ptr{stream_cmd}),radio.uhd.pointerStreamer,pointerCmd);
 	# --- Pointer deferencing  -> ÷2 for Complex output
 	return Int(buffer.pointerSamples[]);
 end#

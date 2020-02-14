@@ -13,7 +13,7 @@ function main()
 	# --- Physical layer and RF parameters 
 	# ---------------------------------------------------- 
 	carrierFreq		= 770e6;		
-	samplingRate	= 100e6; 
+	samplingRate	= 66e6; 
 	rxGain			= 50.0; 
 	nbSamples		= 1000;
 
@@ -25,10 +25,11 @@ function main()
 	  
 	# --- Update configuration 
 	updateCarrierFreq!(radio,660e6);
-	updateSamplingRate!(radio,16e6);
+	updateSamplingRate!(radio,100e6);
 	updateGain!(radio,15);
 	printRadio(radio);
 	
+	updateSamplingRate!(radio,16e6);
 	# --- Release USRP 
 	freeRadio(radio);
 end
