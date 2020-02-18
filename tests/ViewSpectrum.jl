@@ -8,6 +8,7 @@ using Plots
 gr()
 using Printf
 using FFTW
+using Suppressor
 # --- Custom modules
 using UHD
 
@@ -15,6 +16,9 @@ export @updateCarrierFreq
 export @updateGain
 export @updateBand
 export @updateMean
+
+const supressO = true;
+
 
 # ----------------------------------------------------
 ## --- Processing functions
@@ -36,32 +40,37 @@ function hostSpectrum(nFFT);
 	global doTask	= 1;
 	global yLim	    = (-40,40);
 	global changed  = 0;
-	sF 	            = zeros(Float64,nFFT);
-	y	            = zeros(Float64,nFFT);
-	xAx		        = ((collect(0:nFFT-1) ./ nFFT) .-0.5) .* sampleRate;
-	fMHz	        = carrierFreq / 1e6;
+	sF 	            = zeros(Cfloat,nFFT);
+	y	            = zeros(Cfloat,nFFT);
+	xAx		        = ((collect(0:nFFT-1) ./ nFFT) .-0.5) .*  round(radio.samplingRate,digits=2);
+	fMHz	= round(radio.carrierFreq / 1e6, digits=3) ;
 	sig				= zeros(Complex{Cfloat},nFFT); 
 	buffer			= setBuffer(radio);
 	while(true)
 		sF .= 0;
 		for iN  = 1 : 1 : nbSegMean
 			# --- Getting samples
-			getBuffer!(sig,radio,buffer);
+			#@suppress_err let 	
+			@suppress let 	
+				getBuffer!(sig,radio,buffer);
+			end
+			@show err = getError(buffer);
 			y	  .= abs2.(fftshift(fft(@view sig[1:nFFT])));
 			sF		= sF .+ y;
 		end
 		sF		= sF ./ nbSegMean;
 		# --- Configuration axis 
 		if changed == 1
-			xAx     = ((collect(0:nFFT-1) ./ nFFT) .-0.5) .* sampleRate;
-			fMHz	= carrierFreq / 1e6;
+			xAx     = ((collect(0:nFFT-1) ./ nFFT) .-0.5) .* round(radio.samplingRate,digits=2);
+			fMHz	= round(radio.carrierFreq / 1e6, digits=3) ;
 			changed = 0;
 		end
 		# --- Update plot 
-		plt		= plot(xAx/1e6,10*log10.(sF),title="Spectrum of $(sampleRate/1e6) MHz @ $fMHz MHz ",xlabel="Frequency [MHz]",ylabel="Power",label="",ylims=yLim,reuse=false);
+		plt		= plot(xAx/1e6,10*log10.(sF),title="Spectrum of $(round(radio.samplingRate/1e6,digits=2)) MHz @ $fMHz MHz ",xlabel="Frequency [MHz]",ylabel="Power",label="",ylims=yLim,reuse=false);
 		plt.attr[:size]=(1200,800)
 		display(plt);
 		# --- Sleep for @async
+		#FIXME keep that ?
 		sleep(0.001);
 		# --- Interruption manager 
 		if doTask != 1
@@ -108,10 +117,8 @@ macro updateCarrierFreq(param)
 	global changed = 1;
 	global carrierFreq = param;
 	# --- Calling routine to update radio
-	updateCarrierFreq!(radio,carrierFreq);
+	updateCarrierFreq!(radio,param);
 end
-
-
 
 """ @updateGain
 ---

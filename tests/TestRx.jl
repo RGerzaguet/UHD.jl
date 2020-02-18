@@ -24,6 +24,10 @@ function main()
 	printRadio(radio);
 	# --- Get samples 
 	@show sigAll	= getSingleBuffer(radio);
+	@show getError(radio);
+	#@show getMetadata(radio);
+	# 
+	#@show md	= unsafe_load(radio.uhd.pointerMD);
 	#@show sigAll	= getBuffer(radio,nbSamples);
 	#sigAll	= getSingleBuffer(radio);
 	# --- Release USRP 
