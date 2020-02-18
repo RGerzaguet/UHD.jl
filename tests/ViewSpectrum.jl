@@ -78,6 +78,7 @@ function hostSpectrum(nFFT);
 		end
 	end
 	# --- Release USRP 
+	buffer = Any;
 	freeRadio(radio);
 end
 
