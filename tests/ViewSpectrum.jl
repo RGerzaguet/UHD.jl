@@ -54,7 +54,7 @@ function hostSpectrum(nFFT);
 			@suppress let 	
 				getBuffer!(sig,radio,buffer);
 			end
-			@show err = getError(buffer);
+			#@show err = getError(buffer);
 			y	  .= abs2.(fftshift(fft(@view sig[1:nFFT])));
 			sF		= sF .+ y;
 		end
@@ -67,7 +67,7 @@ function hostSpectrum(nFFT);
 		end
 		# --- Update plot 
 		plt		= plot(xAx/1e6,10*log10.(sF),title="Spectrum of $(round(radio.samplingRate/1e6,digits=2)) MHz @ $fMHz MHz ",xlabel="Frequency [MHz]",ylabel="Power",label="",ylims=yLim,reuse=false);
-		plt.attr[:size]=(1200,800)
+		plt.attr[:size]=(800,600)
 		display(plt);
 		# --- Sleep for @async
 		#FIXME keep that ?
