@@ -44,6 +44,9 @@ export updateCarrierFreq!
 #export getRxBuffer, getRxBuffer!
 export getSingleBuffer
 export getBuffer, getBuffer!, setBuffer
+export populateBuffer!
+export getMetadata
+export getError, getTimestamp
 
 
 # ---------------------------------------------------- 
