@@ -67,7 +67,7 @@ function bench()
 		updateSamplingRate!(radio,r);
 		printRadio(radio);
 		# --- Get samples 
-		nbSamples = radio.packetSize;
+		nbSamples = 2*radio.packetSize;
 		sig		  = zeros(Complex{Cfloat},nbSamples); 
 		buffer	  = setBuffer(radio);
 		try 
