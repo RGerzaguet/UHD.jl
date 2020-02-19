@@ -474,7 +474,7 @@ function getBuffer(radio,nbSamples)
 	sigRx	= zeros(Complex{Cfloat},nbSamples); 
 	# --- Populate the buffer 
 	nbSamples = getBuffer!(sigRx,radio,buffer);
-	return nbSamples
+	return sigRx 
 end 
 
 
