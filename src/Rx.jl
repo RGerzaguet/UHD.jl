@@ -493,22 +493,26 @@ Get a single buffer from the USRP device, using the Buffer structure
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-@inline function getBuffer!(sig::Array{Complex{Cfloat}},radio::UHDRx,buffer::Buffer)
+function getBuffer!(sig::Array{Complex{Cfloat}},radio::UHDRx,buffer::Buffer)
 	# --- Defined parameters for multiple buffer reception 
 	filled		= false;
 	posT		= 0;
 	nbSamples	= length(sig);
+	#nb = 0;
 	while !filled 
 		# --- Get a buffer 
 		cSamples  = populateBuffer!(buffer,radio);
 		(posT+cSamples  > nbSamples) ? n = nbSamples - posT : n = cSamples;
 		# --- Populate the complete buffer 
-		sig[posT .+ (1:n)] .= @views(buffer.x[1:2:2n]) .+ 1im*(@views buffer.x[2:2:2n]);
+		#sig[posT .+ (1:n)] .= @views(buffer.x[1:2:2n]) .+ 1im*(@views buffer.x[2:2:2n]);
+		sig[posT .+ (1:n)] .= reinterpret(Complex{Cfloat},@view buffer.x[1:2n]);
 		# --- Update counters 
 		posT += n; 
 		# --- Breaking flag
 		(posT == nbSamples) ? filled=true : filled = false;
+		#nb = nb + 1;
 	end
+	#@show nb
 	return posT
 end
 
@@ -534,12 +538,35 @@ function populateBuffer!(buffer::Buffer,radio)
 	return Int(buffer.pointerSamples[]);
 end#
 
-
+""" 
+--- 
+Returns the Error flag of the current UHD burst 
+--- Syntax 
+flag = getError(radio)
+# --- Input parameters 
+- radio : UHD object [UHDRx]
+# --- Output parameters 
+- err	: Error Flag [error_code_t]
+# --- 
+# v 1.0 - Robin Gerzaguet.
+"""
 function getError(radio::UHDRx)
 	ptrErr = Ref{error_code_t}();
 	ccall((:uhd_rx_metadata_error_code,libUHD), Cvoid,(Ptr{uhd_rx_metadata},Ref{error_code_t}),radio.uhd.pointerMD,ptrErr);
 	return err = ptrErr[];
 end
+""" 
+--- 
+Returns the Error flag of the current buffer 
+--- Syntax 
+flag = getError(buffer)
+# --- Input parameters 
+- buffer : UHD Buffer [Buffer]
+# --- Output parameters 
+- err	: Error Flag [error_code_t]
+# --- 
+# v 1.0 - Robin Gerzaguet.
+"""
 function getError(buffer::Buffer)
 	#ccall((:uhd_rx_metadata_error_code,libUHD), Cvoid,(Ptr{uhd_rx_metadata},Ref{error_code_t}),buffer.md[],buffer.pointerError);
 	#return err = buffer.pointerError[];
@@ -547,12 +574,38 @@ function getError(buffer::Buffer)
 	ccall((:uhd_rx_metadata_error_code,libUHD), Cvoid,(Ptr{uhd_rx_metadata},Ref{Cint}),buffer.md[],pointerError);
 	return pointerError[];
 end
+
+""" 
+--- 
+Return the timestamp of the last UHD burst 
+--- Syntax 
+(second,fracSecond) = getTimestamp(radio)
+# --- Input parameters 
+- radio	  : UHD Radio object [UHDRx]
+# --- Output parameters 
+- second  : Second value for the flag [Int]
+- fracSecond : Fractional second value [Float64]
+# --- 
+# v 1.0 - Robin Gerzaguet.
+"""
 function getTimestamp(radio::UHDRx)
 	ptrFullSec = Ref{Clonglong}();
 	ptrFracSec = Ref{Cdouble}();
 	ccall( (:uhd_rx_metadata_time_spec,libUHD), Cvoid, (Ptr{uhd_rx_metadata},Ref{Clonglong},Ref{Cdouble}),radio.uhd.pointerMD,ptrFullSec,ptrFracSec);
 	return (ptrFullSec[],ptrFracSec[]);
 end
+""" 
+--- 
+Return the timestamp of the current Buffer
+(second,fracSecond) = getTimestamp(buffer)
+# --- Input parameters 
+- radio	  : UHD Buffer [Buffer]
+# --- Output parameters 
+- second  : Second value for the flag [Int]
+- fracSecond : Fractional second value [Float64]
+# --- 
+# v 1.0 - Robin Gerzaguet.
+"""
 function getTimestamp(buffer::Buffer)
 	ccall( (:uhd_rx_metadata_time_spec,libUHD), Cvoid, (Ptr{uhd_rx_metadata},Ref{Clonglong},Ref{Cdouble}),buffer.md[],buffer.pointerFullSec,buffer.pointerFracSec);
 	return (buffer.pointerFullSec[],buffer.pointerFracSec[]);
