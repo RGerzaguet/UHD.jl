@@ -14,21 +14,23 @@ For instance, in order to get 4096 samples at 868MHz with a instantaneous bandwi
 		# --- Physical layer and RF parameters 
 		# ---------------------------------------------------- 
 		carrierFreq		= 868e6;	    % --- The carrier frequency 	
-		samplingRate	        = 16e6;         % --- Targeted bandwdith 
+		samplingRate	= 16e6;         % --- Targeted bandwdith 
 		rxGain			= 30.0;         % --- Rx gain 
 		nbSamples		= 4096;         % --- Desired number of samples
 	
 		# ---------------------------------------------------- 
 		# --- Getting all system with function calls  
 		# ---------------------------------------------------- 
-		% --- Creating the radio ressource 
-		% The first parameter is for specific parameter (FPGA bitstream, IP address)
+		# --- Creating the radio ressource 
+		# The first parameter is for specific parameter (FPGA bitstream, IP address)
 		radio	= setRxRadio("",carrierFreq,samplingRate,rxGain);
 		try 
-		        % --- Display the current radio configuration
-				printRxConfig(x310)
-				% --- Getting a buffe from the radio 
+				# --- Display the current radio configuration
+				printRxConfig(radio);
+				# --- Getting a buffe from the radio 
 				sigAll	= getBuffer(radio,nbSamples);
+				# --- Release the radio ressources
+				freeRadio(radio); 
 		catch exception;
 			@printf("Releasing UHD ressources \n");
 			freeRadio(radio); 
