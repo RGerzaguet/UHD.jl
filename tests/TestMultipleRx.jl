@@ -6,6 +6,9 @@ module TestMultipleRx
 using FFTW 
 using Printf
 using UHD 
+using TimerOutputs
+
+const to = TimerOutput()
 
 
 function main()	
@@ -27,29 +30,33 @@ function main()
 	#for iN = 1 : 1 : 10 
 	cnt = 0; 
 	flagCnt = false;
+	populateBuffer!(buffer,radio);
 	try 
-		while(true)
+		while(true) && cnt < 1000 
 			# --- Direct call to avoid allocation 
 			#getBuffer!(sig,radio,buffer);
-			populateBuffer!(buffer,radio);
-			@show err = getError(buffer);
-			if err > 0xf 
-				@warn "we get unexpected error"
-				flagCnt = true;
-			end
-			if flagCnt 
-				cnt += 1;
-			end
-			if cnt == 25;
-				@error "exiting"
-			end
+			@timeit to "populate " populateBuffer!(buffer,radio);
+			#err = getError(radio);
+			#if err > 0xf 
+				#@warn "we get unexpected error"
+				#flagCnt = true;
+			#end
+			#if flagCnt 
+				#cnt += 1;
+			#end
+			#if cnt == 25;
+				#@error "exiting"
+			#end
 			#@show getTimestamp(buffer);
+			cnt += 1;
 		end
+		freeRadio(radio);
 	catch exception;
 		# --- Release USRP 
 		freeRadio(radio);
 		@show exception;
 	end
+	@show to
 end
 
 
