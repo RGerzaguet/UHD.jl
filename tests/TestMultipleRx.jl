@@ -43,7 +43,7 @@ function main()
 			if cnt == 25;
 				@error "exiting"
 			end
-			@show getTimestamp(buffer);
+			#@show getTimestamp(buffer);
 		end
 	catch exception;
 		# --- Release USRP 
