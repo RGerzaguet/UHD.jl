@@ -21,8 +21,8 @@ else
 		const libUHD	= "/opt/local/lib/libuhd.dylib"; 
 	else 
 		# Default UHD library to be used 
-		#const libUHD = "/usr/lib/x86_64-linux-gnu/libuhd.so.3.14.1";
-		const libUHD = "libuhd";
+		const libUHD = "/usr/lib/x86_64-linux-gnu/libuhd.so.3.14.1";
+		#const libUHD = "libuhd";
 	end
 end
 

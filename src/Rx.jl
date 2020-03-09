@@ -73,26 +73,22 @@ struct uhd_rx_metadata
 end
 
 # --- Rx structures 
-mutable struct UhdRxWrapper 
+mutable struct UHDRxWrapper 
 	pointerUSRP::Ptr{uhd_usrp};
 	pointerStreamer::Ptr{uhd_rx_streamer};
 	pointerMD::Ptr{uhd_rx_metadata};
-	addressUSRP::Any;
-	addressStream::Any;
-	addressMD::Any;
+	addressUSRP::Ref{Ptr{uhd_usrp}};
+	addressStream::Ref{Ptr{uhd_rx_streamer}};
+	addressMD::Ref{Ptr{uhd_rx_metadata}};
 end 
-mutable struct UHDRx 
-	uhd::UhdRxWrapper;
+mutable struct RadioRx 
+	uhd::UHDRxWrapper;
 	carrierFreq::Float64;
 	samplingRate::Float64;
 	rxGain::Union{Int,Float64}; 
 	antenna::String;
 	packetSize::Csize_t;
 	released::Int;
-	pointerCmd::Ref{stream_cmd};
-	#uhdArgs::uhd_stream_args_t;
-	#tuneRequest::uhd_tune_request_t;
-	#pointerTuneResult::Ref{uhd_tune_result};
 end
 
 struct Buffer 
@@ -115,7 +111,7 @@ uhd	  = initRxUHD(sysImage)
 # --- Input parameters 
 - sysImage	  : String with the additionnal load parameters (for instance, path to the FPHGA image) [String]
 # --- Output parameters 
-- uhd		  = UHD Rx object [UhdRxWrapper] 
+- uhd		  = UHD Rx object [UHDRxWrapper] 
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
@@ -123,34 +119,32 @@ function initRxUHD(sysImage)
 	# ---------------------------------------------------- 
 	# --- Handler  
 	# ---------------------------------------------------- 
-	# --- Create a pointer related to the incoming USRP 
-	usrpPointer = Array{Ptr{uhd_usrp},1}(undef,1); 
+	addressUSRP = Ref{Ptr{uhd_usrp}}();
 	# --- Cal the init
-	ccall((:uhd_usrp_make, libUHD), Cvoid, (Ptr{Ptr{uhd_usrp}}, Cstring),usrpPointer,sysImage);
-	# --- Recover the USRP
-	usrp	  = usrpPointer[1];
+	ccall((:uhd_usrp_make, libUHD), Cvoid, (Ptr{Ptr{uhd_usrp}}, Cstring),addressUSRP,sysImage);
+	# --- Get the usable object 
+	usrpPointer = addressUSRP[];
 	# ---------------------------------------------------- 
 	# --- Rx Streamer  
 	# ---------------------------------------------------- 
 	# --- Create a pointer related to the Rx streamer
-	streamerPointer = Array{Ptr{uhd_rx_streamer},1}(undef,1); 
+	addressStream = Ref{Ptr{uhd_rx_streamer}}(); 
 	# --- Cal the init
-	ccall((:uhd_rx_streamer_make, libUHD), Cvoid, (Ptr{Ptr{uhd_rx_streamer}},),streamerPointer);
-	# --- Recover the streamer
-	streamer  = streamerPointer[1];
+	ccall((:uhd_rx_streamer_make, libUHD), Cvoid, (Ptr{Ptr{uhd_rx_streamer}},),addressStream);
+	streamerPointer = addressStream[];
 	# ---------------------------------------------------- 
 	# --- Rx Metadata  
 	# ---------------------------------------------------- 
 	# --- Create a pointer related to Metadata 
-	metadataPointer = Array{Ptr{uhd_rx_metadata},1}(undef,1); 
+	addressMD = Ref{Ptr{uhd_rx_metadata}}(); 
 	# --- Cal the init
-	ccall((:uhd_rx_metadata_make, libUHD), Cvoid, (Ptr{Ptr{uhd_rx_metadata}},),metadataPointer);
-	# --- Recover Metadata
-	metadata = metadataPointer[1];
+	ccall((:uhd_rx_metadata_make, libUHD), Cvoid, (Ptr{Ptr{uhd_rx_metadata}},),addressMD);
+	# --- Get the usable object 
+	metadataPointer = addressMD[];
 	# ---------------------------------------------------- 
 	# --- Create the USRP wrapper object  
 	# ---------------------------------------------------- 
-	uhd  = UhdRxWrapper(usrp,streamer,metadata,usrpPointer,streamerPointer,metadataPointer);
+	uhd  = UHDRxWrapper(usrpPointer,streamerPointer,metadataPointer,addressUSRP,addressStream,addressMD);
 	@info("Done init \n");
 	return uhd;
 end
@@ -168,7 +162,7 @@ setRxRadio(uhd,carrierFreq,samplingRate,rxGain,antenna="TX/RX")
 - rxGain		: Desired Rx Gain [Union{Int,Float64}] 
 - antenna		: Desired Antenna alias [String] (default "TX/RX");
 # --- Output parameters 
-- UHDRx		  	: UHD Rx object with PHY parameters [UHDRx]  
+- RadioRx		  	: UHD Rx object with PHY parameters [RadioRx]  
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
@@ -236,7 +230,7 @@ function setRxRadio(sysImage,carrierFreq,samplingRate,rxGain,antenna="TX/RX")
 	# ---------------------------------------------------- 
 	# --- Antenna configuration 
 	# ---------------------------------------------------- 
-	#ccall((:uhd_usrp_set_rx_antenna, libUHD), Cvoid, (Ptr{uhd_usrp}, Cstring, Csize_t),uhd.pointerUSRP,antenna,0);
+	ccall((:uhd_usrp_set_rx_antenna, libUHD), Cvoid, (Ptr{uhd_usrp}, Cstring, Csize_t),uhd.pointerUSRP,antenna,0);
 	# ---------------------------------------------------- 
 	# --- Setting up streamer  
 	# ---------------------------------------------------- 
@@ -256,7 +250,7 @@ function setRxRadio(sysImage,carrierFreq,samplingRate,rxGain,antenna="TX/RX")
 	# --- Create object and return  
 	# ---------------------------------------------------- 
 	# --- Return  
-	return UHDRx(uhd,updateCarrierFreq,updateRate,updateGain,antenna,nbSamples,0,pointerCmd);
+	return RadioRx(uhd,updateCarrierFreq,updateRate,updateGain,antenna,nbSamples,0);
 end
 
 """ 
@@ -265,21 +259,20 @@ Close the USRP device (Rx mode) and release all associated objects
 # --- Syntax 
 #	freeRadio(uhd)
 # --- Input parameters 
-- uhd	: UHD object [UHDRx]
+- uhd	: UHD object [RadioRx]
 # --- Output parameters 
 - []
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function freeRadio(radio::UHDRx)
+function freeRadio(radio::RadioRx)
 	# --- Checking realease nature 
 	# There is one flag to avoid double free (that leads to seg fault) 
 	if radio.released == 0
 		# C Wrapper to ressource release 
 		ccall((:uhd_usrp_free, libUHD), Cvoid, (Ptr{Ptr{uhd_usrp}},),radio.uhd.addressUSRP);
-		#FIXME Should be Ptr{Ptr} ?
-		ccall((:uhd_rx_streamer_free, libUHD), Cvoid, (Ptr{uhd_rx_streamer},),radio.uhd.addressStream);
-		ccall((:uhd_usrp_free, libUHD), Cvoid, (Ptr{uhd_rx_metadata},),radio.uhd.addressMD);
+		ccall((:uhd_rx_streamer_free, libUHD), Cvoid, (Ptr{Ptr{uhd_rx_streamer}},),radio.uhd.addressStream);
+		ccall((:uhd_usrp_free, libUHD), Cvoid, (Ptr{Ptr{uhd_rx_metadata}},),radio.uhd.addressMD);
 		@info "USRP device is now free.";
 	else 
 		# print a warning  
@@ -301,7 +294,7 @@ Print the radio configuration
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function printRadio(radio::UHDRx)
+function printRadio(radio::RadioRx)
 	# Get the gain from UHD 
 	pointerGain	  = Ref{Cdouble}(0);
 	ccall((:uhd_usrp_get_rx_gain, libUHD), Cvoid, (Ptr{Cvoid}, Csize_t, Cstring,Ref{Cdouble}),radio.uhd.pointerUSRP,0,"",pointerGain);
@@ -326,14 +319,14 @@ Update sampling rate of current radio device, and update radio object with the n
 --- Syntax 
   updateSamplingRate!(radio,samplingRate)
 # --- Input parameters 
-- radio	  : Radio device [UHDRx]
+- radio	  : Radio device [RadioRx]
 - samplingRate	: New desired sampling rate 
 # --- Output parameters 
 - 
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function updateSamplingRate!(radio::UHDRx,samplingRate)
+function updateSamplingRate!(radio::RadioRx,samplingRate)
 	# ---------------------------------------------------- 
 	# --- Sampling rate configuration  
 	# ---------------------------------------------------- 
@@ -360,14 +353,14 @@ Update gain of current radio device, and update radio object with the new obtain
 --- Syntax 
   updateGain!(radio,gain)
 # --- Input parameters 
-- radio	  : Radio device [UHDRx]
+- radio	  : Radio device [RadioRx]
 - gain	: New desired gain 
 # --- Output parameters 
 - 
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function updateGain!(radio::UHDRx,gain)
+function updateGain!(radio::RadioRx,gain)
 	# ---------------------------------------------------- 
 	# --- Sampling rate configuration  
 	# ---------------------------------------------------- 
@@ -387,7 +380,7 @@ function updateGain!(radio::UHDRx,gain)
 	radio.rxGain = updateGain;
 end
 
-function updateCarrierFreq!(radio::UHDRx,carrierFreq)
+function updateCarrierFreq!(radio::RadioRx,carrierFreq)
 	# ---------------------------------------------------- 
 	# --- Carrier Frequency configuration  
 	# ---------------------------------------------------- 
@@ -414,7 +407,7 @@ Create a buffer structure to mutualize all needed ressource to populate an incom
 # --- Syntax 
 #	buffer = setBuffer(radio)
 # --- Input parameters 
--  radio  : UHD object [UHDRx]
+-  radio  : UHD object [RadioRx]
 # --- Output parameters 
 - buffer  : Buffer structure [Buffer]
 # --- 
@@ -438,7 +431,7 @@ Get a single buffer from the USRP device, and create all the necessary resources
 # --- Syntax 
 	sig	  = getBuffer(radio)
 # --- Input parameters 
-- radio	  : Radio object [UHDRx]
+- radio	  : Radio object [RadioRx]
 # --- Output parameters 
 - sig	  : baseband signal from radio [Array{CFloat},2*radio.packetSize]
 # --- 
@@ -460,7 +453,7 @@ Get a single buffer from the USRP device, and create all the necessary ressource
 # --- Syntax 
 	sig	  = getBuffer(radio,nbSamples)
 # --- Input parameters 
-- radio	  : Radio object [UHDRx]
+- radio	  : Radio object [RadioRx]
 - nbSamples : Desired number of samples [Int]
 # --- Output parameters 
 - sig	  : baseband signal from radio [Array{Complex{CFloat}},radio.packetSize]
@@ -486,14 +479,14 @@ Get a single buffer from the USRP device, using the Buffer structure
 	getBuffer!(sig,radio,nbSamples)
 # --- Input parameters 
 - sig	  : Complex signal to populate [Array{Complex{Cfloat}}]
-- radio	  : Radio object [UHDRx]
+- radio	  : Radio object [RadioRx]
 - buffer  : Buffer object [Buffer] (obtained with setBuffer(radio))
 # --- Output parameters 
 - sig	  : baseband signal from radio [Array{Complex{Cfloat}},radio.packetSize]
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function getBuffer!(sig::Array{Complex{Cfloat}},radio::UHDRx,buffer::Buffer)
+function getBuffer!(sig::Array{Complex{Cfloat}},radio::RadioRx,buffer::Buffer)
 	# --- Defined parameters for multiple buffer reception 
 	filled		= false;
 	posT		= 0;
@@ -523,15 +516,13 @@ Populate the Buffer structure with ccall from UHD.
 populateBuffer!(buffer::Buffer,radio)
 # --- Input parameters 
 - buffer  : Buffer structure [Buffer]
-- radio	  : Radio device [UHDRx]
+- radio	  : Radio device [RadioRx]
 # --- Output parameters 
 - nbSamples	  : Complex samples obtained [Int]
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
 function populateBuffer!(buffer::Buffer,radio)
-	# --- Issue stream command 
-	#ccall((:uhd_rx_streamer_issue_stream_cmd, libUHD), Cvoid, (Ptr{uhd_stream_args_t},Ptr{stream_cmd}),radio.uhd.pointerStreamer,radio.pointerCmd);
 	# --- Effectively recover data
 	ccall((:uhd_rx_streamer_recv, libUHD), Cvoid,(Ptr{uhd_rx_streamer},Ptr{Ptr{Cvoid}},Csize_t,Ptr{Ptr{uhd_rx_metadata}},Cfloat,Cint,Ref{Csize_t}),radio.uhd.pointerStreamer,buffer.ptr,radio.packetSize,buffer.md,10,false,buffer.pointerSamples);
 		# --- Pointer deferencing 
@@ -544,13 +535,13 @@ Returns the Error flag of the current UHD burst
 --- Syntax 
 flag = getError(radio)
 # --- Input parameters 
-- radio : UHD object [UHDRx]
+- radio : UHD object [RadioRx]
 # --- Output parameters 
 - err	: Error Flag [error_code_t]
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function getError(radio::UHDRx)
+function getError(radio::RadioRx)
 	ptrErr = Ref{error_code_t}();
 	ccall((:uhd_rx_metadata_error_code,libUHD), Cvoid,(Ptr{uhd_rx_metadata},Ref{error_code_t}),radio.uhd.pointerMD,ptrErr);
 	return err = ptrErr[];
@@ -581,14 +572,14 @@ Return the timestamp of the last UHD burst
 --- Syntax 
 (second,fracSecond) = getTimestamp(radio)
 # --- Input parameters 
-- radio	  : UHD Radio object [UHDRx]
+- radio	  : UHD Radio object [RadioRx]
 # --- Output parameters 
 - second  : Second value for the flag [Int]
 - fracSecond : Fractional second value [Float64]
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function getTimestamp(radio::UHDRx)
+function getTimestamp(radio::RadioRx)
 	ptrFullSec = Ref{Clonglong}();
 	ptrFracSec = Ref{Cdouble}();
 	ccall( (:uhd_rx_metadata_time_spec,libUHD), Cvoid, (Ptr{uhd_rx_metadata},Ref{Clonglong},Ref{Cdouble}),radio.uhd.pointerMD,ptrFullSec,ptrFracSec);
