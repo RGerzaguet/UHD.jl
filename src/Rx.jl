@@ -3,7 +3,8 @@ mutable struct uhd_usrp
 end
 mutable struct uhd_rx_streamer
 end
-
+mutable struct uhd_string_vector
+end
 # Direclry inherited from C file tune_request.h
 @enum uhd_tune_request_policy_t begin 
 	UHD_TUNE_REQUEST_POLICY_NONE=78;
@@ -27,6 +28,27 @@ end
 	ERROR_CODE_BAD_PACKET = 0xf;
 	BIG_PROBLEM;
 end
+@enum uhd_error begin 
+	UHD_ERROR_NONE = 0;
+	UHD_ERROR_INVALID_DEVICE = 1;
+	UHD_ERROR_INDEX = 10;
+	UHD_ERROR_KEY = 11;
+	UHD_ERROR_NOT_IMPLEMENTED = 20;
+	UHD_ERROR_USB = 21;
+	UHD_ERROR_IO = 30;
+	UHD_ERROR_OS = 31;
+	UHD_ERROR_ASSERTION = 40;
+	UHD_ERROR_LOOKUP = 41;
+	UHD_ERROR_TYPE = 42;
+	UHD_ERROR_VALUE = 43;
+	UHD_ERROR_RUNTIME = 44;
+	UHD_ERROR_ENVIRONMENT = 45;
+	UHD_ERROR_SYSTEM = 46;
+	UHD_ERROR_EXCEPT = 47;
+	UHD_ERROR_BOOSTEXCEPT = 60;
+	UHD_ERROR_STDEXCEPT = 70;
+	UHD_ERROR_UNKNOWN = 100
+end 
 
 # --- Runtime structure 
 # These structures are necessary to tun the Rx wrapper 
@@ -74,6 +96,7 @@ end
 
 # --- Rx structures 
 mutable struct UHDRxWrapper 
+	flag::Bool;
 	pointerUSRP::Ptr{uhd_usrp};
 	pointerStreamer::Ptr{uhd_rx_streamer};
 	pointerMD::Ptr{uhd_rx_metadata};
@@ -101,6 +124,22 @@ struct Buffer
 	pointerFracSec::Ref{Cdouble};
 end
 
+"""
+" @assert_uhd macro
+# Get the current UHD flag and raise an error if necessary 
+"""
+macro assert_uhd(ex)
+	quote 
+		local flag = $(esc(ex));
+		if flag == UHD_ERROR_KEY
+			error("Unable to create the UHD device. No attached UHD device found."); 
+		elseif flag != UHD_ERROR_NONE 
+			error("Unable to create or instantiate the UHD device. The return error flag is $flag"); 
+		end
+	end
+end
+
+
 
 
 """ 
@@ -121,7 +160,7 @@ function initRxUHD(sysImage)
 	# ---------------------------------------------------- 
 	addressUSRP = Ref{Ptr{uhd_usrp}}();
 	# --- Cal the init
-	ccall((:uhd_usrp_make, libUHD), Cvoid, (Ptr{Ptr{uhd_usrp}}, Cstring),addressUSRP,sysImage);
+	@assert_uhd ccall((:uhd_usrp_make, libUHD), uhd_error, (Ptr{Ptr{uhd_usrp}}, Cstring),addressUSRP,sysImage);
 	# --- Get the usable object 
 	usrpPointer = addressUSRP[];
 	# ---------------------------------------------------- 
@@ -130,7 +169,7 @@ function initRxUHD(sysImage)
 	# --- Create a pointer related to the Rx streamer
 	addressStream = Ref{Ptr{uhd_rx_streamer}}(); 
 	# --- Cal the init
-	ccall((:uhd_rx_streamer_make, libUHD), Cvoid, (Ptr{Ptr{uhd_rx_streamer}},),addressStream);
+	@assert_uhd ccall((:uhd_rx_streamer_make, libUHD), uhd_error, (Ptr{Ptr{uhd_rx_streamer}},),addressStream);
 	streamerPointer = addressStream[];
 	# ---------------------------------------------------- 
 	# --- Rx Metadata  
@@ -138,13 +177,13 @@ function initRxUHD(sysImage)
 	# --- Create a pointer related to Metadata 
 	addressMD = Ref{Ptr{uhd_rx_metadata}}(); 
 	# --- Cal the init
-	ccall((:uhd_rx_metadata_make, libUHD), Cvoid, (Ptr{Ptr{uhd_rx_metadata}},),addressMD);
+	@assert_uhd ccall((:uhd_rx_metadata_make, libUHD), uhd_error, (Ptr{Ptr{uhd_rx_metadata}},),addressMD);
 	# --- Get the usable object 
 	metadataPointer = addressMD[];
 	# ---------------------------------------------------- 
 	# --- Create the USRP wrapper object  
 	# ---------------------------------------------------- 
-	uhd  = UHDRxWrapper(usrpPointer,streamerPointer,metadataPointer,addressUSRP,addressStream,addressMD);
+	uhd  = UHDRxWrapper(true,usrpPointer,streamerPointer,metadataPointer,addressUSRP,addressStream,addressMD);
 	@info("Done init \n");
 	return uhd;
 end
@@ -243,7 +282,7 @@ function setRxRadio(sysImage,carrierFreq,samplingRate,rxGain,antenna="TX/RX")
 	nbSamples		  = pointerSamples[];	
 	# --- Create streamer master 
 	#streamCmd	= stream_cmd(UHD_STREAM_MODE_NUM_SAMPS_AND_DONE,nbSamples,true,0,0.0);
-	streamCmd	= stream_cmd(UHD_STREAM_MODE_START_CONTINUOUS,nbSamples,true,0,0.5);
+	streamCmd	= stream_cmd(UHD_STREAM_MODE_START_CONTINUOUS,nbSamples,true,0,0.0);
 	pointerCmd	= Ref{stream_cmd}(streamCmd);
 	ccall((:uhd_rx_streamer_issue_stream_cmd, libUHD), Cvoid, (Ptr{uhd_stream_args_t},Ptr{stream_cmd}),uhd.pointerStreamer,pointerCmd);
 	# ---------------------------------------------------- 
@@ -601,3 +640,4 @@ function getTimestamp(buffer::Buffer)
 	ccall( (:uhd_rx_metadata_time_spec,libUHD), Cvoid, (Ptr{uhd_rx_metadata},Ref{Clonglong},Ref{Cdouble}),buffer.md[],buffer.pointerFullSec,buffer.pointerFracSec);
 	return (buffer.pointerFullSec[],buffer.pointerFracSec[]);
 end
+
