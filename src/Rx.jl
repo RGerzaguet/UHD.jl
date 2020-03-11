@@ -308,6 +308,8 @@ function free(radio::RadioRx)
 	# --- Checking realease nature 
 	# There is one flag to avoid double free (that leads to seg fault) 
 	if radio.released == 0
+		print("\n");
+		@warn "Catch exception, release UHD related ressources"
 		# C Wrapper to ressource release 
 		@assert_uhd  ccall((:uhd_usrp_free, libUHD), uhd_error, (Ptr{Ptr{uhd_usrp}},),radio.uhd.addressUSRP);
 		#@assert_uhd ccall((:uhd_rx_streamer_free, libUHD), uhd_error, (Ptr{Ptr{uhd_rx_streamer}},),radio.uhd.addressStream);
