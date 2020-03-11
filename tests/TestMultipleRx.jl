@@ -50,10 +50,10 @@ function main()
 			#@show getTimestamp(buffer);
 			cnt += 1;
 		end
-		freeRadio(radio);
+		free(radio);
 	catch exception;
 		# --- Release USRP 
-		freeRadio(radio);
+		free(radio);
 		@show exception;
 	end
 	@show to

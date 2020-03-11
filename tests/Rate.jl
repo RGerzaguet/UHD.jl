@@ -45,11 +45,11 @@ function testRate(samplingRate)
 		end
 		tFinal= timeStamp(getTimestamp(buffer)...);
 		@show rate  = getRate(tInit,tFinal,bL);
-		freeRadio(radio);
+		free(radio);
 		return rate, radio.samplingRate;
 	catch exception;
 		# --- Release USRP 
-		freeRadio(radio);
+		free(radio);
 		@show exception;
 	end
 end
@@ -67,7 +67,7 @@ function bench()
 		updateSamplingRate!(radio,r);
 		printRadio(radio);
 		# --- Get samples 
-		nbSamples = 2*radio.packetSize;
+		nbSamples = 20*radio.packetSize;
 		sig		  = zeros(Complex{Cfloat},nbSamples); 
 		buffer	  = setBuffer(radio);
 		try 
@@ -92,12 +92,12 @@ function bench()
 		catch exception;
 			# --- Release USRP 
 			buffer = Any;
-			freeRadio(radio);
+			free(radio);
 			@show exception;
 		end
 	end
 	buffer = Any;
-	freeRadio(radio);
+	free(radio);
 	# --- Figure 
 	layout = Plotly.Layout(;title="Rate  ",
 						   xaxis_title="Desired rate  ",

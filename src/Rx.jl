@@ -116,7 +116,7 @@ end
 
 struct Buffer 
 	x::Array{Cfloat};
-	md::Ref{Ptr{uhd_rx_metadata}};
+	#md::Ref{Ptr{uhd_rx_metadata}};
 	ptr::Ref{Ptr{Cvoid}};
 	pointerSamples::Ref{Csize_t};
 	pointerError::Ref{error_code_t};
@@ -205,7 +205,7 @@ setRxRadio(uhd,carrierFreq,samplingRate,rxGain,antenna="TX/RX")
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function setRxRadio(sysImage,carrierFreq,samplingRate,rxGain,antenna="TX/RX")
+function setRxRadio(sysImage,carrierFreq,samplingRate,rxGain,antenna="RX2")
 	# ---------------------------------------------------- 
 	# --- Init  UHD object  
 	# ---------------------------------------------------- 
@@ -296,7 +296,7 @@ end
 --- 
 Close the USRP device (Rx mode) and release all associated objects
 # --- Syntax 
-#	freeRadio(uhd)
+#	free(uhd)
 # --- Input parameters 
 - uhd	: UHD object [RadioRx]
 # --- Output parameters 
@@ -304,14 +304,14 @@ Close the USRP device (Rx mode) and release all associated objects
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function freeRadio(radio::RadioRx)
+function free(radio::RadioRx)
 	# --- Checking realease nature 
 	# There is one flag to avoid double free (that leads to seg fault) 
 	if radio.released == 0
 		# C Wrapper to ressource release 
-		ccall((:uhd_usrp_free, libUHD), Cvoid, (Ptr{Ptr{uhd_usrp}},),radio.uhd.addressUSRP);
-		ccall((:uhd_rx_streamer_free, libUHD), Cvoid, (Ptr{Ptr{uhd_rx_streamer}},),radio.uhd.addressStream);
-		ccall((:uhd_usrp_free, libUHD), Cvoid, (Ptr{Ptr{uhd_rx_metadata}},),radio.uhd.addressMD);
+		@assert_uhd  ccall((:uhd_usrp_free, libUHD), uhd_error, (Ptr{Ptr{uhd_usrp}},),radio.uhd.addressUSRP);
+		#@assert_uhd ccall((:uhd_rx_streamer_free, libUHD), uhd_error, (Ptr{Ptr{uhd_rx_streamer}},),radio.uhd.addressStream);
+		#@assert_uhd ccall((:uhd_usrp_free, libUHD), uhd_error, (Ptr{Ptr{uhd_rx_metadata}},),radio.uhd.addressMD);
 		@info "USRP device is now free.";
 	else 
 		# print a warning  
@@ -457,11 +457,9 @@ function setBuffer(radio)
 	buff            = Vector{Cfloat}(undef,2*radio.packetSize);
 	# --- Convert it to void** 
 	ptr				= Ref(Ptr{Cvoid}(pointer(buff)));
-	# --- Passing metadata to pointer for getting info from USRP 
-	md			    = Ref(radio.uhd.pointerMD);
 	# --- Pointer to recover number of samples received 
 	pointerSamples  = Ref{Csize_t}(0);
-	return Buffer(buff,md,ptr,pointerSamples,Ref{error_code_t}(),Ref{Clonglong}(),Ref{Cdouble}());
+	return Buffer(buff,ptr,pointerSamples,Ref{error_code_t}(),Ref{Clonglong}(),Ref{Cdouble}());
 end
 
 """ 
@@ -481,8 +479,9 @@ function getSingleBuffer(radio)
 	buffer = setBuffer(radio);
 	# --- Populate the incoming buffer 
 	populateBuffer!(buffer,radio);
+	x	  = buffer.x;
 	# --- Return (only) the baseband samples
-	return buffer.x;
+	return x;
 end
 #TODO Should we keep this function ? 
 
@@ -563,7 +562,7 @@ populateBuffer!(buffer::Buffer,radio)
 """
 function populateBuffer!(buffer::Buffer,radio)
 	# --- Effectively recover data
-	ccall((:uhd_rx_streamer_recv, libUHD), Cvoid,(Ptr{uhd_rx_streamer},Ptr{Ptr{Cvoid}},Csize_t,Ptr{Ptr{uhd_rx_metadata}},Cfloat,Cint,Ref{Csize_t}),radio.uhd.pointerStreamer,buffer.ptr,radio.packetSize,buffer.md,10,false,buffer.pointerSamples);
+	ccall((:uhd_rx_streamer_recv, libUHD), Cvoid,(Ptr{uhd_rx_streamer},Ptr{Ptr{Cvoid}},Csize_t,Ptr{Ptr{uhd_rx_metadata}},Cfloat,Cint,Ref{Csize_t}),radio.uhd.pointerStreamer,buffer.ptr,radio.packetSize,radio.uhd.addressMD,10,false,buffer.pointerSamples);
 		# --- Pointer deferencing 
 	return Int(buffer.pointerSamples[]);
 end#
@@ -585,25 +584,7 @@ function getError(radio::RadioRx)
 	ccall((:uhd_rx_metadata_error_code,libUHD), Cvoid,(Ptr{uhd_rx_metadata},Ref{error_code_t}),radio.uhd.pointerMD,ptrErr);
 	return err = ptrErr[];
 end
-""" 
---- 
-Returns the Error flag of the current buffer 
---- Syntax 
-flag = getError(buffer)
-# --- Input parameters 
-- buffer : UHD Buffer [Buffer]
-# --- Output parameters 
-- err	: Error Flag [error_code_t]
-# --- 
-# v 1.0 - Robin Gerzaguet.
-"""
-function getError(buffer::Buffer)
-	#ccall((:uhd_rx_metadata_error_code,libUHD), Cvoid,(Ptr{uhd_rx_metadata},Ref{error_code_t}),buffer.md[],buffer.pointerError);
-	#return err = buffer.pointerError[];
-	pointerError = Ref{Cint}();
-	ccall((:uhd_rx_metadata_error_code,libUHD), Cvoid,(Ptr{uhd_rx_metadata},Ref{Cint}),buffer.md[],pointerError);
-	return pointerError[];
-end
+
 
 """ 
 --- 
@@ -623,21 +604,5 @@ function getTimestamp(radio::RadioRx)
 	ptrFracSec = Ref{Cdouble}();
 	ccall( (:uhd_rx_metadata_time_spec,libUHD), Cvoid, (Ptr{uhd_rx_metadata},Ref{Clonglong},Ref{Cdouble}),radio.uhd.pointerMD,ptrFullSec,ptrFracSec);
 	return (ptrFullSec[],ptrFracSec[]);
-end
-""" 
---- 
-Return the timestamp of the current Buffer
-(second,fracSecond) = getTimestamp(buffer)
-# --- Input parameters 
-- radio	  : UHD Buffer [Buffer]
-# --- Output parameters 
-- second  : Second value for the flag [Int]
-- fracSecond : Fractional second value [Float64]
-# --- 
-# v 1.0 - Robin Gerzaguet.
-"""
-function getTimestamp(buffer::Buffer)
-	ccall( (:uhd_rx_metadata_time_spec,libUHD), Cvoid, (Ptr{uhd_rx_metadata},Ref{Clonglong},Ref{Cdouble}),buffer.md[],buffer.pointerFullSec,buffer.pointerFracSec);
-	return (buffer.pointerFullSec[],buffer.pointerFracSec[]);
 end
 

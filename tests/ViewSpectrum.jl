@@ -67,11 +67,11 @@ function hostSpectrum(nFFT);
 		end
 		# --- Update plot 
 		plt		= plot(xAx/1e6,10*log10.(sF),title="Spectrum of $(round(radio.samplingRate/1e6,digits=2)) MHz @ $fMHz MHz ",xlabel="Frequency [MHz]",ylabel="Power",label="",ylims=yLim,reuse=false);
-		plt.attr[:size]=(800,600)
+		plt.attr[:size]=(1200,800)
 		display(plt);
 		# --- Sleep for @async
 		#FIXME keep that ?
-		sleep(0.001);
+		#sleep(0.001);
 		# --- Interruption manager 
 		if doTask != 1
 			break;
@@ -79,7 +79,7 @@ function hostSpectrum(nFFT);
 	end
 	# --- Release USRP 
 	buffer = Any;
-	freeRadio(radio);
+	free(radio);
 end
 
 """ killSpectrum

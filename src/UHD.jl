@@ -36,7 +36,7 @@ export UhdRxWrapper
 # Export functions 
 export initRxUHD; 
 export setRxRadio;
-export freeRadio;
+export free;
 export printRadio;
 export updateSamplingRate!
 export updateGain!

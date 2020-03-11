@@ -29,9 +29,9 @@ function main()
 	# 
 	#@show md	= unsafe_load(radio.uhd.pointerMD);
 	#@show sigAll	= getBuffer(radio,nbSamples);
-	#sigAll	= getSingleBuffer(radio);
+#sigAll	= getSingleBuffer(radio);
 	# --- Release USRP 
-	freeRadio(radio);
+	free(radio);
 end
 
 

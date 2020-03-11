@@ -45,10 +45,13 @@ end
 			print("\rUSRP rate is $(currRate) MS/s");
 		end
 	catch exception;
-		freeRadio(radio);
+		free(radio);
 		rethrow(exception);
 	end
 end
+
+
+
 
 
 # Using direct call of method
@@ -67,10 +70,10 @@ end
 		end
 		# --- Free environment
 		buffer = Any;
-		freeRadio(radio);
+		free(radio);
 	catch exception;
 		# --- Free environment in case of exception
-		freeRadio(radio);
+		free(radio);
 		rethrow(exception);
 	end
 end
@@ -190,7 +193,8 @@ function mainSeq()
 	rxGain              = -3;
 	start();
 	# --- Update e310 configuration
-	radio = setRxRadio("",carrierFreq,100e6,rxGain); 
+	radio = setRxRadio("",carrierFreq,bandwidth,rxGain); 
+	printRadio(radio);
 	# ----------------------------------------------------
 	# --- P1 : Getting data
 	# ----------------------------------------------------
