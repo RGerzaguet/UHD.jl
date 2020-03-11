@@ -22,7 +22,7 @@ function main()
 
 	# --- Setting a very first configuration 
 	global radio = setRxRadio("",carrierFreq,samplingRate,rxGain); 
-	printRadio(radio);
+	print(radio);
 	# --- Get samples 
 	nbSamples = 4096; 
 	sig		  = zeros(Complex{Cfloat},nbSamples); 

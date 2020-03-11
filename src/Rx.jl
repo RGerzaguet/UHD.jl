@@ -333,7 +333,7 @@ Print the radio configuration
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function printRadio(radio::RadioRx)
+function print(radio::RadioRx)
 	# Get the gain from UHD 
 	pointerGain	  = Ref{Cdouble}(0);
 	ccall((:uhd_usrp_get_rx_gain, libUHD), Cvoid, (Ptr{Cvoid}, Csize_t, Cstring,Ref{Cdouble}),radio.uhd.pointerUSRP,0,"",pointerGain);

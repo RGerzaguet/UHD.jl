@@ -21,13 +21,13 @@ function main()
 
 	# --- Setting a very first configuration 
 	global radio = setRxRadio("",carrierFreq,samplingRate,rxGain); 
-	printRadio(radio);
+	print(radio);
 	  
 	# --- Update configuration 
 	updateCarrierFreq!(radio,660e6);
 	updateSamplingRate!(radio,100e6);
 	updateGain!(radio,15);
-	printRadio(radio);
+	print(radio);
 	
 	updateSamplingRate!(radio,16e6);
 	# --- Release USRP 

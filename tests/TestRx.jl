@@ -21,7 +21,7 @@ function main()
 
 	# --- Setting a very first configuration 
 	global radio = setRxRadio("",carrierFreq,samplingRate,rxGain); 
-	#printRadio(radio);
+	#print(radio);
 	# --- Get samples 
 	#@show sigAll	= getSingleBuffer(radio);
 	#@show getError(radio);

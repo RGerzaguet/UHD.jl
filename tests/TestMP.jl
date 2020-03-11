@@ -194,7 +194,7 @@ function mainSeq()
 	start();
 	# --- Update e310 configuration
 	radio = setRxRadio("",carrierFreq,bandwidth,rxGain); 
-	printRadio(radio);
+	print(radio);
 	# ----------------------------------------------------
 	# --- P1 : Getting data
 	# ----------------------------------------------------
