@@ -2,6 +2,8 @@ module UHD
 
 using Libdl 
 using Printf
+
+
 # ---------------------------------------------------- 
 # --- Library managment  
 # ---------------------------------------------------- 
@@ -11,6 +13,7 @@ using Printf
 # TODO This is quite a hacky way to do this, a cleaner way to do this ?? 
 useRFNoC		= false;  
 # Librar$ to use is RFNoC based 
+const ARCHI = Sys.CPU_NAME == "cortex-a9" ? "arm" : "pc";
 if useRFNoC 
 	# We manually load the libuhd.so.4
 	#const libUHD	= "/home/root/localInstall/usr/lib/libuhd.so.4";
@@ -19,12 +22,26 @@ else
 	if Sys.isapple() 
 		# --- For apple archi, UHD is installed with macports 
 		const libUHD	= "/opt/local/lib/libuhd.dylib"; 
+		const FORMAT_LONG = Clonglong;
 	else 
 		# Default UHD library to be used 
-		const libUHD = "/usr/lib/x86_64-linux-gnu/libuhd.so.3.14.1";
-		#const libUHD = "libuhd";
+		if ARCHI == "arm"
+			const libUHD = "libuhd";
+			const FORMAT_LONG = Int32;
+		else 
+			const libUHD = "/usr/lib/x86_64-linux-gnu/libuhd.so.3.14.1";
+			const FORMAT_LONG = Clonglong;
+		 end
 	end
 end
+
+# ---------------------------------------------------- 
+# --- Common configuration and structures 
+# ---------------------------------------------------- 
+# Including the file 
+include("common.jl");
+export Timestamp
+
 
 # ---------------------------------------------------- 
 # --- Receiver Configuration 

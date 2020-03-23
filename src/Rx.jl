@@ -5,79 +5,6 @@ mutable struct uhd_rx_streamer
 end
 mutable struct uhd_string_vector
 end
-# Direclry inherited from C file tune_request.h
-@enum uhd_tune_request_policy_t begin 
-	UHD_TUNE_REQUEST_POLICY_NONE=78;
-	UHD_TUNE_REQUEST_POLICY_AUTO=65;
-	UHD_TUNE_REQUEST_POLICY_MANUAL=77
-end
-# Directly inherited from C file usrp.h
-@enum uhd_stream_mode_t  begin 
-	UHD_STREAM_MODE_START_CONTINUOUS   = 97;
-	UHD_STREAM_MODE_STOP_CONTINUOUS    = 111;
-	UHD_STREAM_MODE_NUM_SAMPS_AND_DONE = 100;
-	UHD_STREAM_MODE_NUM_SAMPS_AND_MORE = 109
-end
-@enum error_code_t begin
-	ERROR_CODE_NONE = 0x0;
-	ERROR_CODE_TIMEOUT = 0x1;
-	ERROR_CODE_LATE_COMMAND = 0x2;
-	ERROR_CODE_BROKEN_CHAIN = 0x4;
-	ERROR_CODE_OVERFLOW = 0x8;
-	ERROR_CODE_ALIGNMENT = 0xc;
-	ERROR_CODE_BAD_PACKET = 0xf;
-	BIG_PROBLEM;
-end
-@enum uhd_error begin 
-	UHD_ERROR_NONE = 0;
-	UHD_ERROR_INVALID_DEVICE = 1;
-	UHD_ERROR_INDEX = 10;
-	UHD_ERROR_KEY = 11;
-	UHD_ERROR_NOT_IMPLEMENTED = 20;
-	UHD_ERROR_USB = 21;
-	UHD_ERROR_IO = 30;
-	UHD_ERROR_OS = 31;
-	UHD_ERROR_ASSERTION = 40;
-	UHD_ERROR_LOOKUP = 41;
-	UHD_ERROR_TYPE = 42;
-	UHD_ERROR_VALUE = 43;
-	UHD_ERROR_RUNTIME = 44;
-	UHD_ERROR_ENVIRONMENT = 45;
-	UHD_ERROR_SYSTEM = 46;
-	UHD_ERROR_EXCEPT = 47;
-	UHD_ERROR_BOOSTEXCEPT = 60;
-	UHD_ERROR_STDEXCEPT = 70;
-	UHD_ERROR_UNKNOWN = 100
-end 
-
-# --- Runtime structure 
-# These structures are necessary to tun the Rx wrapper 
-struct uhd_stream_args_t 
-	cpu_format::Cstring
-	otw_format::Cstring;
-	args::Cstring;
-	channel_list::Ref{Csize_t};
-	n_channels::Cint;
-end
-struct uhd_tune_request_t 
-	target_freq::Cdouble;
-	rf_freq_policy::uhd_tune_request_policy_t;
-	dsp_freq_policy::uhd_tune_request_policy_t;
-end
-struct uhd_tune_result 
-	clipped_rf_freq::Cdouble;
-	target_rf_freq::Cdouble;
-	actual_rf_freq::Cdouble;
-	target_dsp_freq::Cdouble;
-	actual_dsp_freq::Cdouble;
-end
-struct stream_cmd
-	stream_mode::uhd_stream_mode_t;
-	num_samps::Csize_t;
-	stream_now::Cint;
-	time_spec_full_secs::Cintmax_t;
-	time_spec_frac_secs::Cdouble;
-end
 
 struct uhd_rx_metadata 
 	has_time_spec::Cuchar;
@@ -116,29 +43,12 @@ end
 
 struct Buffer 
 	x::Array{Cfloat};
-	#md::Ref{Ptr{uhd_rx_metadata}};
 	ptr::Ref{Ptr{Cvoid}};
 	pointerSamples::Ref{Csize_t};
 	pointerError::Ref{error_code_t};
 	pointerFullSec::Ref{Clonglong};
 	pointerFracSec::Ref{Cdouble};
 end
-
-"""
-" @assert_uhd macro
-# Get the current UHD flag and raise an error if necessary 
-"""
-macro assert_uhd(ex)
-	quote 
-		local flag = $(esc(ex));
-		if flag == UHD_ERROR_KEY
-			error("Unable to create the UHD device. No attached UHD device found."); 
-		elseif flag != UHD_ERROR_NONE 
-			error("Unable to create or instantiate the UHD device. The return error flag is $flag"); 
-		end
-	end
-end
-
 
 
 
@@ -282,7 +192,7 @@ function setRxRadio(sysImage,carrierFreq,samplingRate,rxGain,antenna="RX2")
 	nbSamples		  = pointerSamples[];	
 	# --- Create streamer master 
 	#streamCmd	= stream_cmd(UHD_STREAM_MODE_NUM_SAMPS_AND_DONE,nbSamples,true,0,0.0);
-	streamCmd	= stream_cmd(UHD_STREAM_MODE_START_CONTINUOUS,nbSamples,true,0,0.0);
+	streamCmd	= stream_cmd(UHD_STREAM_MODE_START_CONTINUOUS,nbSamples,true,2,0.0);
 	pointerCmd	= Ref{stream_cmd}(streamCmd);
 	ccall((:uhd_rx_streamer_issue_stream_cmd, libUHD), Cvoid, (Ptr{uhd_stream_args_t},Ptr{stream_cmd}),uhd.pointerStreamer,pointerCmd);
 	# ---------------------------------------------------- 
@@ -309,7 +219,7 @@ function free(radio::RadioRx)
 	# There is one flag to avoid double free (that leads to seg fault) 
 	if radio.released == 0
 		print("\n");
-		@warn "Catch exception, release UHD related ressources"
+		@info "Catch exception, release UHD related ressources"
 		# C Wrapper to ressource release 
 		@assert_uhd  ccall((:uhd_usrp_free, libUHD), uhd_error, (Ptr{Ptr{uhd_usrp}},),radio.uhd.addressUSRP);
 		#@assert_uhd ccall((:uhd_rx_streamer_free, libUHD), uhd_error, (Ptr{Ptr{uhd_rx_streamer}},),radio.uhd.addressStream);
@@ -335,7 +245,7 @@ Print the radio configuration
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function print(radio::RadioRx)
+function Base.print(radio::RadioRx)
 	# Get the gain from UHD 
 	pointerGain	  = Ref{Cdouble}(0);
 	ccall((:uhd_usrp_get_rx_gain, libUHD), Cvoid, (Ptr{Cvoid}, Csize_t, Cstring,Ref{Cdouble}),radio.uhd.pointerUSRP,0,"",pointerGain);
@@ -529,20 +439,20 @@ Get a single buffer from the USRP device, using the Buffer structure
 function getBuffer!(sig::Array{Complex{Cfloat}},radio::RadioRx,buffer::Buffer)
 	# --- Defined parameters for multiple buffer reception 
 	filled		= false;
-	posT		= 0;
-	nbSamples	= length(sig);
+	posT		= Csize_t(0);
+	nbSamples	= Csize_t(length(sig));
 	#nb = 0;
 	while !filled 
-		# --- Get a buffer 
-		cSamples  = populateBuffer!(buffer,radio);
-		(posT+cSamples  > nbSamples) ? n = nbSamples - posT : n = cSamples;
+		# --- Get a buffer: We should have radio.packetSize or less 
+		(posT+radio.packetSize> nbSamples) ? n = nbSamples - posT : n = radio.packetSize;
+		cSamples  = populateBuffer!(buffer,radio,n);
 		# --- Populate the complete buffer 
 		#sig[posT .+ (1:n)] .= @views(buffer.x[1:2:2n]) .+ 1im*(@views buffer.x[2:2:2n]);
-		sig[posT .+ (1:n)] .= reinterpret(Complex{Cfloat},@view buffer.x[1:2n]);
+		sig[posT .+ (1:cSamples)] .= reinterpret(Complex{Cfloat},@view buffer.x[1:2cSamples]);
 		# --- Update counters 
-		posT += n; 
+		posT += cSamples; 
 		# --- Breaking flag
-		(posT == nbSamples) ? filled=true : filled = false;
+		(posT == nbSamples) ? filled = true : filled = false;
 		#nb = nb + 1;
 	end
 	#@show nb
@@ -562,11 +472,17 @@ populateBuffer!(buffer::Buffer,radio)
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function populateBuffer!(buffer::Buffer,radio)
+function populateBuffer!(buffer::Buffer,radio,nbSamples::Csize_t=0)
+	# --- Getting number of samples 
+	# If not specified, we get back to radio.packetSize
+	if nbSamples == 0 
+		nbSamples = radio.packetSize;
+	end
+	#@assert nbSamples <= length(buffer.x) "Number of desired samples can not be greater than buffer size";
 	# --- Effectively recover data
-	ccall((:uhd_rx_streamer_recv, libUHD), Cvoid,(Ptr{uhd_rx_streamer},Ptr{Ptr{Cvoid}},Csize_t,Ptr{Ptr{uhd_rx_metadata}},Cfloat,Cint,Ref{Csize_t}),radio.uhd.pointerStreamer,buffer.ptr,radio.packetSize,radio.uhd.addressMD,10,false,buffer.pointerSamples);
+	ccall((:uhd_rx_streamer_recv, libUHD), Cvoid,(Ptr{uhd_rx_streamer},Ptr{Ptr{Cvoid}},Csize_t,Ptr{Ptr{uhd_rx_metadata}},Cfloat,Cint,Ref{Csize_t}),radio.uhd.pointerStreamer,buffer.ptr,nbSamples,radio.uhd.addressMD,1,false,buffer.pointerSamples);
 		# --- Pointer deferencing 
-	return Int(buffer.pointerSamples[]);
+	return buffer.pointerSamples[];
 end#
 
 """ 
@@ -602,9 +518,9 @@ Return the timestamp of the last UHD burst
 # v 1.0 - Robin Gerzaguet.
 """
 function getTimestamp(radio::RadioRx)
-	ptrFullSec = Ref{Clonglong}();
+	ptrFullSec = Ref{FORMAT_LONG}();
 	ptrFracSec = Ref{Cdouble}();
-	ccall( (:uhd_rx_metadata_time_spec,libUHD), Cvoid, (Ptr{uhd_rx_metadata},Ref{Clonglong},Ref{Cdouble}),radio.uhd.pointerMD,ptrFullSec,ptrFracSec);
+	ccall( (:uhd_rx_metadata_time_spec,libUHD), Cvoid, (Ptr{uhd_rx_metadata},Ref{FORMAT_LONG},Ref{Cdouble}),radio.uhd.pointerMD,ptrFullSec,ptrFracSec);
 	return (ptrFullSec[],ptrFracSec[]);
 end
 
