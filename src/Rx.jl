@@ -3,8 +3,6 @@ mutable struct uhd_usrp
 end
 mutable struct uhd_rx_streamer
 end
-mutable struct uhd_string_vector
-end
 
 struct uhd_rx_metadata 
 	has_time_spec::Cuchar;
