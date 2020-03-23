@@ -38,20 +38,13 @@ mutable struct RadioRx
 	released::Int;
 end
 
-struct Buffer 
-	x::Array{Cfloat};
-	ptr::Ref{Ptr{Cvoid}};
-	pointerSamples::Ref{Csize_t};
-	pointerError::Ref{error_code_t};
-	pointerFullSec::Ref{Clonglong};
-	pointerFracSec::Ref{Cdouble};
-end
+
 
 
 
 """ 
 --- 
-Initiate all structures to instantiaet and pilot a USRP device.
+Initiate all structures to instantiate and pilot a USRP device into Receiver mode (Rx).
 --- Syntax 
 uhd	  = initRxUHD(sysImage)
 # --- Input parameters 
@@ -98,9 +91,9 @@ end
 
 """ 
 --- 
-Init the core parameter of the radio and intiate RF parameters 
+Init the core parameter of the radio (Rx mode) and initiate RF parameters 
 --- Syntax 
-setRxRadio(uhd,carrierFreq,samplingRate,rxGain,antenna="TX/RX")
+setRxRadio(sysImage,carrierFreq,samplingRate,rxGain,antenna="TX/RX")
 # --- Input parameters 
 - sysImage	  : String with the additionnal load parameters (for instance, path to the FPHGA image) [String]
 - carrierFreq	: Desired Carrier frequency [Union{Int,Float64}] 
@@ -220,7 +213,7 @@ function free(radio::RadioRx)
 		# C Wrapper to ressource release 
 		@assert_uhd  ccall((:uhd_usrp_free, libUHD), uhd_error, (Ptr{Ptr{uhd_usrp}},),radio.uhd.addressUSRP);
 		#@assert_uhd ccall((:uhd_rx_streamer_free, libUHD), uhd_error, (Ptr{Ptr{uhd_rx_streamer}},),radio.uhd.addressStream);
-		#@assert_uhd ccall((:uhd_usrp_free, libUHD), uhd_error, (Ptr{Ptr{uhd_rx_metadata}},),radio.uhd.addressMD);
+		#@assert_uhd ccall((:uhd_rx_metadata_free, libUHD), uhd_error, (Ptr{Ptr{uhd_rx_metadata}},),radio.uhd.addressMD);
 		@info "USRP device is now free.";
 	else 
 		# print a warning  
@@ -346,29 +339,6 @@ function updateCarrierFreq!(radio::RadioRx,carrierFreq)
 		@info "Effective carrier frequency is $(updateCarrierFreq/1e6) MHz\n";
 	end	
 	radio.carrierFreq = carrierFreq;
-end
-
-
-""" 
---- 
-Create a buffer structure to mutualize all needed ressource to populate an incoming buffer from UHD
-# --- Syntax 
-#	buffer = setBuffer(radio)
-# --- Input parameters 
--  radio  : UHD object [RadioRx]
-# --- Output parameters 
-- buffer  : Buffer structure [Buffer]
-# --- 
-# v 1.0 - Robin Gerzaguet.
-"""
-function setBuffer(radio)
-	# --- Instantiate buffer 
-	buff            = Vector{Cfloat}(undef,2*radio.packetSize);
-	# --- Convert it to void** 
-	ptr				= Ref(Ptr{Cvoid}(pointer(buff)));
-	# --- Pointer to recover number of samples received 
-	pointerSamples  = Ref{Csize_t}(0);
-	return Buffer(buff,ptr,pointerSamples,Ref{error_code_t}(),Ref{Clonglong}(),Ref{Cdouble}());
 end
 
 """ 

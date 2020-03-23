@@ -44,7 +44,7 @@ end
 end 
 
 # --- Runtime structure 
-# These structures are necessary to tun the Rx wrapper 
+# These structures are necessary to run the wrapper 
 struct uhd_stream_args_t 
 	cpu_format::Cstring
 	otw_format::Cstring;
@@ -72,6 +72,7 @@ struct stream_cmd
 	time_spec_frac_secs::Cdouble;
 end
 
+# --- Structure to manipulate UHD time stamps
 struct Timestamp 
 	intPart::FORMAT_LONG;
 	fracPart::Cdouble;
@@ -86,6 +87,7 @@ macro assert_uhd(ex)
 	quote 
 		local flag = $(esc(ex));
 		if flag == UHD_ERROR_KEY
+			# --- Specific 
 			error("Unable to create the UHD device. No attached UHD device found."); 
 		elseif flag != UHD_ERROR_NONE 
 			error("Unable to create or instantiate the UHD device. The return error flag is $flag"); 
@@ -96,3 +98,38 @@ end
 # --- Global UHD structure from UHD 
 mutable struct uhd_usrp
 end
+
+
+struct Buffer 
+	x::Array{Cfloat};
+	ptr::Ref{Ptr{Cvoid}};
+	pointerSamples::Ref{Csize_t};
+	pointerError::Ref{error_code_t};
+	pointerFullSec::Ref{Clonglong};
+	pointerFracSec::Ref{Cdouble};
+end
+
+
+
+""" 
+--- 
+Create a buffer structure to mutualize all needed ressource to populate an incoming buffer from UHD
+# --- Syntax 
+#	buffer = setBuffer(radio)
+# --- Input parameters 
+-  radio  : UHD object [RadioRx]
+# --- Output parameters 
+- buffer  : Buffer structure [Buffer]
+# --- 
+# v 1.0 - Robin Gerzaguet.
+"""
+function setBuffer(radio)
+	# --- Instantiate buffer 
+	buff            = Vector{Cfloat}(undef,2*radio.packetSize);
+	# --- Convert it to void** 
+	ptr				= Ref(Ptr{Cvoid}(pointer(buff)));
+	# --- Pointer to recover number of samples received 
+	pointerSamples  = Ref{Csize_t}(0);
+	return Buffer(buff,ptr,pointerSamples,Ref{error_code_t}(),Ref{Clonglong}(),Ref{Cdouble}());
+end
+

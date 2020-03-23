@@ -27,6 +27,7 @@ else
 		# Default UHD library to be used 
 		if ARCHI == "arm"
 			const libUHD = "libuhd";
+			# For E310 device, TimeStamp is a Int32 and Clonglong is mapped as a 64 bit word.
 			const FORMAT_LONG = Int32;
 		else 
 			const libUHD = "/usr/lib/x86_64-linux-gnu/libuhd.so.3.14.1";
@@ -38,7 +39,7 @@ end
 # ---------------------------------------------------- 
 # --- Common configuration and structures 
 # ---------------------------------------------------- 
-# Including the file 
+# --- Including the file 
 include("common.jl");
 export Timestamp
 
@@ -53,8 +54,6 @@ export UHDRxWrapper
 # Export functions 
 export initRxUHD; 
 export setRxRadio;
-export free;
-export print;
 export updateSamplingRate!
 export updateGain!
 export updateCarrierFreq!
@@ -70,6 +69,18 @@ export getError, getTimestamp
 # ---------------------------------------------------- 
 # All structures and functions for the Tx side 
 include("Tx.jl");
+# Structures 
+export UHDTxWrapper;
+# Export functions 
+export initTxUHD; 
+export setTxRadio;
+export sendBuffer;
+export sendCyclicBuffer;
+# ---------------------------------------------------- 
+# --- Common functions and structures   
+# ---------------------------------------------------- 
+export print; 
+export free;
 
 
 end # module
