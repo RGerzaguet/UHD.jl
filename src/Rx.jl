@@ -324,7 +324,7 @@ function updateGain!(radio::RadioRx,gain)
 	updateGain	  = pointerGain[]; 
 	# --- Print a flag 
 	if updateGain != gain 
-		@warn "Effective gain is $(updateGain) dB and not $(rxGain) dB\n" 
+		@warn "Effective gain is $(updateGain) dB and not $(gain) dB\n" 
 	else 
 		@info "Effective gain is $(updateGain) dB\n";
 	end 

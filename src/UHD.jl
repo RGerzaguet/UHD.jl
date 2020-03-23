@@ -49,7 +49,7 @@ export Timestamp
 # All structures and functions for the Rx side 
 include("Rx.jl");
 # Structures 
-export UhdRxWrapper
+export UHDRxWrapper
 # Export functions 
 export initRxUHD; 
 export setRxRadio;
@@ -62,7 +62,6 @@ export updateCarrierFreq!
 export getSingleBuffer
 export getBuffer, getBuffer!, setBuffer
 export populateBuffer!
-export getMetadata
 export getError, getTimestamp
 
 
