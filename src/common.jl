@@ -93,5 +93,6 @@ macro assert_uhd(ex)
 	end
 end
 
-
-
+# --- Global UHD structure from UHD 
+mutable struct uhd_usrp
+end

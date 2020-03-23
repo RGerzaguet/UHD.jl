@@ -1,6 +1,5 @@
 # --- Working structures 
-mutable struct uhd_usrp
-end
+
 mutable struct uhd_rx_streamer
 end
 
