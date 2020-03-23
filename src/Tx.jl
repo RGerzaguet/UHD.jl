@@ -315,7 +315,7 @@ function updateCarrierFreq!(radio::RadioTx, carrierFreq)
 end
 
 
-function sendBuffer(radio::RadioTx, buffer::Union{Array{Complex{Cfloat}},Array{Cfloat}}, cyclic = false)
+function sendBuffer(radio::RadioTx, buffer::Union{Array{Complex{Cfloat}},Array{Cfloat}}, cyclic::Bool = false)
 	# --- Global pointer 
 	ptr				= Ref(Ptr{Cvoid}(pointer(buffer)));
 	# --- Pointer to number of samples transmitted 
@@ -330,7 +330,7 @@ function sendBuffer(radio::RadioTx, buffer::Union{Array{Complex{Cfloat}},Array{C
 			ccall((:uhd_tx_streamer_send, libUHD), uhd_error, (Ptr{uhd_tx_streamer}, Ptr{Ptr{Cvoid}}, Csize_t, Ptr{Ptr{uhd_tx_metadata}}, Cfloat, Ref{Csize_t}), radio.uhd.pointerStreamer, ptr, sL, radio.uhd.addressMD, 0.1, pointerSamples);
 			# --- Getting number of transmitted samples
 			nbEch 		+= pointerSamples[];
-			# --- Detection of perpetual 
+			# --- Detection of cyclic mode 
 			(cyclic == false) && break 
 			# --- Forcing refresh
 			yield();
@@ -342,6 +342,7 @@ function sendBuffer(radio::RadioTx, buffer::Union{Array{Complex{Cfloat}},Array{C
 		@info "Interruption detected";
 	end
 	# --- Return number of complex samples transmitted
+	# We accumulate number of samples transmitted, we should divide by 2 to get number of Complex samples
 	return (nbEch ÷ 2);
 end
 
