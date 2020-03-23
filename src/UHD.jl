@@ -75,7 +75,6 @@ export UHDTxWrapper;
 export initTxUHD; 
 export setTxRadio;
 export sendBuffer;
-export sendCyclicBuffer;
 # ---------------------------------------------------- 
 # --- Common functions and structures   
 # ---------------------------------------------------- 

@@ -345,27 +345,3 @@ function sendBuffer(radio::RadioTx, buffer::Union{Array{Complex{Cfloat}},Array{C
 	return (nbEch ÷ 2);
 end
 
-function sendCyclicBuffer(radio::RadioTx, buffer::Union{Array{Complex{Cfloat}},Array{Cfloat}})
-	# --- Global pointer 
-	ptr				= Ref(Ptr{Cvoid}(pointer(buffer)));
-	pointerSamples 	= Ref{Csize_t}(0);
-	nbEch 			= Csize_t(0);
-	# sL			 	= Csize_t(0);
-	# --- Size of current buffer 
-	# Deduce size if input is complex or not
-	sL = Csize_t(sizeof(buffer) ÷ sizeof(Cfloat));
-	# --- Effectively transmit data
-	try
-		while (true)
-			ccall((:uhd_tx_streamer_send, libUHD), Cvoid, (Ptr{uhd_tx_streamer}, Ptr{Ptr{Cvoid}}, Csize_t, Ptr{Ptr{uhd_tx_metadata}}, Cfloat, Ref{Csize_t}), radio.uhd.pointerStreamer, ptr, sL, radio.uhd.addressMD, 0.1, pointerSamples);
-			nbEch += pointerSamples[];
-			# --- Forcing a yeld to allow interruptions
-			yield();
-		end 
-	catch e;
-		print(e);
-		print("\n");
-		@info "Interruption detected"
-	end
-	return nbEch;
-end
