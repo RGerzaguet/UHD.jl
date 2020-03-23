@@ -54,10 +54,6 @@ export UHDRxWrapper
 # Export functions 
 export initRxUHD; 
 export setRxRadio;
-export updateSamplingRate!
-export updateGain!
-export updateCarrierFreq!
-#export getRxBuffer, getRxBuffer!
 export getSingleBuffer
 export getBuffer, getBuffer!, setBuffer
 export populateBuffer!
@@ -78,6 +74,9 @@ export sendBuffer;
 # ---------------------------------------------------- 
 # --- Common functions and structures   
 # ---------------------------------------------------- 
+export updateSamplingRate!
+export updateGain!
+export updateCarrierFreq!
 export print; 
 export free;
 
