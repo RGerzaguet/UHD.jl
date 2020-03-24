@@ -54,8 +54,8 @@ export UHDRxWrapper
 # Export functions 
 export initRxUHD; 
 export setRxRadio;
-export getSingleBuffer
-export getBuffer, getBuffer!, setBuffer
+export recv,recv!;
+export setBuffer
 export populateBuffer!
 export getError, getTimestamp
 
@@ -70,7 +70,7 @@ export UHDTxWrapper;
 # Export functions 
 export initTxUHD; 
 export setTxRadio;
-export sendBuffer;
+export send;
 # ---------------------------------------------------- 
 # --- Common functions and structures   
 # ---------------------------------------------------- 

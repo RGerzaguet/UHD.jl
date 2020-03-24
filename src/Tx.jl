@@ -315,7 +315,7 @@ function updateCarrierFreq!(radio::RadioTx, carrierFreq)
 end
 
 
-function sendBuffer(radio::RadioTx, buffer::Union{Array{Complex{Cfloat}},Array{Cfloat}}, cyclic::Bool = false)
+function send(radio::RadioTx, buffer::Union{Array{Complex{Cfloat}},Array{Cfloat}}, cyclic::Bool = false)
 	# --- Global pointer 
 	ptr				= Ref(Ptr{Cvoid}(pointer(buffer)));
 	# --- Pointer to number of samples transmitted 

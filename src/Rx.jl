@@ -38,6 +38,39 @@ mutable struct RadioRx
 	released::Int;
 end
 
+struct Buffer 
+	x::Array{Cfloat};
+	ptr::Ref{Ptr{Cvoid}};
+	pointerSamples::Ref{Csize_t};
+	pointerError::Ref{error_code_t};
+	pointerFullSec::Ref{Clonglong};
+	pointerFracSec::Ref{Cdouble};
+end
+
+
+
+""" 
+--- 
+Create a buffer structure to mutualize all needed ressource to populate an incoming buffer from UHD
+# --- Syntax 
+#	buffer = setBuffer(radio)
+# --- Input parameters 
+-  radio  : UHD object [RadioRx]
+# --- Output parameters 
+- buffer  : Buffer structure [Buffer]
+# --- 
+# v 1.0 - Robin Gerzaguet.
+"""
+function setBuffer(radio)
+	# --- Instantiate buffer 
+	buff            = Vector{Cfloat}(undef,2*radio.packetSize);
+	# --- Convert it to void** 
+	ptr				= Ref(Ptr{Cvoid}(pointer(buff)));
+	# --- Pointer to recover number of samples received 
+	pointerSamples  = Ref{Csize_t}(0);
+	return Buffer(buff,ptr,pointerSamples,Ref{error_code_t}(),Ref{Clonglong}(),Ref{Cdouble}());
+end
+
 
 
 
@@ -343,32 +376,9 @@ end
 
 """ 
 --- 
-Get a single buffer from the USRP device, and create all the necessary resources
-# --- Syntax 
-	sig	  = getBuffer(radio)
-# --- Input parameters 
-- radio	  : Radio object [RadioRx]
-# --- Output parameters 
-- sig	  : baseband signal from radio [Array{CFloat},2*radio.packetSize]
-# --- 
-# v 1.0 - Robin Gerzaguet.
-"""
-function getSingleBuffer(radio)
-	# --- Create the buffer object to recover data 
-	buffer = setBuffer(radio);
-	# --- Populate the incoming buffer 
-	populateBuffer!(buffer,radio);
-	x	  = buffer.x;
-	# --- Return (only) the baseband samples
-	return x;
-end
-#TODO Should we keep this function ? 
-
-""" 
---- 
 Get a single buffer from the USRP device, and create all the necessary ressources
 # --- Syntax 
-	sig	  = getBuffer(radio,nbSamples)
+	sig	  = recv(radio,nbSamples)
 # --- Input parameters 
 - radio	  : Radio object [RadioRx]
 - nbSamples : Desired number of samples [Int]
@@ -377,7 +387,7 @@ Get a single buffer from the USRP device, and create all the necessary ressource
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function getBuffer(radio,nbSamples)
+function recv(radio,nbSamples)
 	# --- Create the buffer object to recover data 
 	buffer	= setBuffer(radio);
 	# --- Create the global container 
@@ -393,7 +403,7 @@ end
 --- 
 Get a single buffer from the USRP device, using the Buffer structure 
 # --- Syntax 
-	getBuffer!(sig,radio,nbSamples)
+	recv!(sig,radio,nbSamples)
 # --- Input parameters 
 - sig	  : Complex signal to populate [Array{Complex{Cfloat}}]
 - radio	  : Radio object [RadioRx]
@@ -403,18 +413,16 @@ Get a single buffer from the USRP device, using the Buffer structure
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function getBuffer!(sig::Array{Complex{Cfloat}},radio::RadioRx,buffer::Buffer)
+function recv!(sig::Array{Complex{Cfloat}},radio::RadioRx,buffer::Buffer)
 	# --- Defined parameters for multiple buffer reception 
 	filled		= false;
 	posT		= Csize_t(0);
 	nbSamples	= Csize_t(length(sig));
-	#nb = 0;
 	while !filled 
 		# --- Get a buffer: We should have radio.packetSize or less 
 		(posT+radio.packetSize> nbSamples) ? n = nbSamples - posT : n = radio.packetSize;
 		cSamples  = populateBuffer!(buffer,radio,n);
 		# --- Populate the complete buffer 
-		#sig[posT .+ (1:n)] .= @views(buffer.x[1:2:2n]) .+ 1im*(@views buffer.x[2:2:2n]);
 		sig[posT .+ (1:cSamples)] .= reinterpret(Complex{Cfloat},@view buffer.x[1:2cSamples]);
 		# --- Update counters 
 		posT += cSamples; 
@@ -422,7 +430,6 @@ function getBuffer!(sig::Array{Complex{Cfloat}},radio::RadioRx,buffer::Buffer)
 		(posT == nbSamples) ? filled = true : filled = false;
 		#nb = nb + 1;
 	end
-	#@show nb
 	return posT
 end
 
@@ -442,9 +449,7 @@ populateBuffer!(buffer::Buffer,radio)
 function populateBuffer!(buffer::Buffer,radio,nbSamples::Csize_t=0)
 	# --- Getting number of samples 
 	# If not specified, we get back to radio.packetSize
-	if nbSamples == 0 
-		nbSamples = radio.packetSize;
-	end
+	nbSamples == 0 && nbSamples = radio.packetSize;
 	#@assert nbSamples <= length(buffer.x) "Number of desired samples can not be greater than buffer size";
 	# --- Effectively recover data
 	ccall((:uhd_rx_streamer_recv, libUHD), Cvoid,(Ptr{uhd_rx_streamer},Ptr{Ptr{Cvoid}},Csize_t,Ptr{Ptr{uhd_rx_metadata}},Cfloat,Cint,Ref{Csize_t}),radio.uhd.pointerStreamer,buffer.ptr,nbSamples,radio.uhd.addressMD,1,false,buffer.pointerSamples);

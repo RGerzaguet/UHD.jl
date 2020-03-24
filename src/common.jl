@@ -100,36 +100,3 @@ mutable struct uhd_usrp
 end
 
 
-struct Buffer 
-	x::Array{Cfloat};
-	ptr::Ref{Ptr{Cvoid}};
-	pointerSamples::Ref{Csize_t};
-	pointerError::Ref{error_code_t};
-	pointerFullSec::Ref{Clonglong};
-	pointerFracSec::Ref{Cdouble};
-end
-
-
-
-""" 
---- 
-Create a buffer structure to mutualize all needed ressource to populate an incoming buffer from UHD
-# --- Syntax 
-#	buffer = setBuffer(radio)
-# --- Input parameters 
--  radio  : UHD object [RadioRx]
-# --- Output parameters 
-- buffer  : Buffer structure [Buffer]
-# --- 
-# v 1.0 - Robin Gerzaguet.
-"""
-function setBuffer(radio)
-	# --- Instantiate buffer 
-	buff            = Vector{Cfloat}(undef,2*radio.packetSize);
-	# --- Convert it to void** 
-	ptr				= Ref(Ptr{Cvoid}(pointer(buff)));
-	# --- Pointer to recover number of samples received 
-	pointerSamples  = Ref{Csize_t}(0);
-	return Buffer(buff,ptr,pointerSamples,Ref{error_code_t}(),Ref{Clonglong}(),Ref{Cdouble}());
-end
-
