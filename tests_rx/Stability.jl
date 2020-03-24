@@ -45,7 +45,7 @@ function main()
 	try 
 		while(true) 
 			# --- Direct call to avoid allocation 
-			getBuffer!(sig,radio,buffer);
+			recv!(sig,radio,buffer);
 			cnt += 1;
 			#print("\rProcessed $(cnt) bursts");
 		end
@@ -86,17 +86,17 @@ function mainFFT(radio,samplingRate,nbSamples)
 	nS		  = 0;
 	nbBuffer  = Int(1e4);
 	# --- Pre-processing 
-	getBuffer!(sig,radio,buffer);
+	recv!(sig,radio,buffer);
 	#processing!(sig,out,P);
 	# --- Timestamp init 
-	p = getBuffer!(sig,radio,buffer);
+	p = recv!(sig,radio,buffer);
 	#processing!(sig,out,P);
 	# --- MEtrics 
 	nS		+= p;
 	timeInit  = Timestamp(getTimestamp(radio)...);
 	while true
 		# --- Direct call to avoid allocation 
-		p = getBuffer!(sig,radio,buffer);
+		p = recv!(sig,radio,buffer);
 		# --- Apply processing method
 		#processing!(sig,out,P);
 		# ---  Ensure packet is OK

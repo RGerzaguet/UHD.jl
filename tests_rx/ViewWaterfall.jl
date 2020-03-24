@@ -55,7 +55,7 @@ function hostSpectrum(nFFT,nbTime);
 			# --- Getting samples
 			#@suppress_err let 	
 			@suppress let 	
-				getBuffer!(sig,radio,buffer);
+				recv!(sig,radio,buffer);
 			end
 			#@show err = getError(buffer);
 			y	  .= abs2.(fftshift(fft(@view sig[1:nFFT])));

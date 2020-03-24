@@ -36,7 +36,7 @@ function testRate(samplingRate)
 		tFinal	= Any; 
 		while bL < nbRun
 			# --- Direct call to avoid allocation 
-			nS = getBuffer!(sig,radio,buffer);
+			nS = recv!(sig,radio,buffer);
 			#nS = populateBuffer!(buffer,radio);
 			if bL == 0
 				tInit  = timeStamp(getTimestamp(buffer)...);
@@ -78,7 +78,7 @@ function bench()
 			tFinal	= Any; 
 			while bL < nbRun
 				# --- Direct call to avoid allocation 
-				nS = getBuffer!(sig,radio,buffer);
+				nS = recv!(sig,radio,buffer);
 				#nS = populateBuffer!(buffer,radio);
 				if bL == 0
 					tInit  = timeStamp(getTimestamp(buffer)...);

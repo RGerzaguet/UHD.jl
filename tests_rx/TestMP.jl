@@ -38,7 +38,7 @@ end
 		timeInit  = time();
 		bA		  = 0;
 		while(true)
-			y      = getBuffer(radio,radio.packetSize);
+			y      = recv(radio,radio.packetSize);
 			processingData(y);
 			bA	  += length(y);
 			currRate  = round(getRate(timeInit,bA)/1e6;digits=2);
@@ -62,7 +62,7 @@ end
 		buffer = setBuffer(radio);
 		while doTask 
 			# --- Populate a buffer from the USRP 
-			getBuffer!(sig,radio,buffer);
+			recv!(sig,radio,buffer);
 			# --- Set the buffer in the common shared channel 
 			put!(chnl,sig)
 			# --- Force actualisation of state (otherwise cannot have break)

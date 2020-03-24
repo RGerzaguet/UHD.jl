@@ -32,7 +32,7 @@ function getDataSequential(radio)
 		buffer = setBuffer(radio);
 		sig    = zeros(Complex{Cfloat},radio.packetSize);
 		while(true)
-			getBuffer!(sig,radio,buffer);
+			recv!(sig,radio,buffer);
 			processingData(sig);
 			bA	  += length(sig);
 			if mod(bA,100000) == 0
@@ -55,7 +55,7 @@ function produceData(chnl,radio)
 		buffer = setBuffer(radio);
 		while doTask 
 			# --- Populate a buffer from the USRP 
-			getBuffer!(sig,radio,buffer);
+			recv!(sig,radio,buffer);
 			# --- Set the buffer in the common shared channel 
 			put!(chnl,sig)
 			# --- Force actualisation of state (otherwise cannot have break)

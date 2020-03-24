@@ -24,7 +24,7 @@ function main()
     buffer	= randn(Complex{Cfloat},radio.packetSize);
     buffer	= randn(Cfloat,2*radio.packetSize);
 
-	nbEch	= sendBuffer(radio,buffer,true)
+	nbEch	= send(radio,buffer,true)
 	#for iN = 1 : 1 : 1000
 	#nbEch = sendBuffer(radio,buffer);
 	#@show Int(nbEch);

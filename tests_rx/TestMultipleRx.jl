@@ -34,7 +34,7 @@ function main()
 	try 
 		while(true) && cnt < 1000 
 			# --- Direct call to avoid allocation 
-			#getBuffer!(sig,radio,buffer);
+			#recv!(sig,radio,buffer);
 			@timeit to "populate " populateBuffer!(buffer,radio);
 			#err = getError(radio);
 			#if err > 0xf 
