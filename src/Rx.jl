@@ -19,7 +19,7 @@ struct uhd_rx_metadata
 end
 
 # --- Rx structures 
-mutable struct UHDRxWrapper 
+struct UHDRxWrapper 
 	flag::Bool;
 	pointerUSRP::Ptr{uhd_usrp};
 	pointerStreamer::Ptr{uhd_rx_streamer};
@@ -27,7 +27,9 @@ mutable struct UHDRxWrapper
 	addressUSRP::Ref{Ptr{uhd_usrp}};
 	addressStream::Ref{Ptr{uhd_rx_streamer}};
 	addressMD::Ref{Ptr{uhd_rx_metadata}};
+	pointerSamples::Ref{Csize_t}
 end 
+
 mutable struct RadioRx 
 	uhd::UHDRxWrapper;
 	carrierFreq::Float64;
@@ -37,41 +39,6 @@ mutable struct RadioRx
 	packetSize::Csize_t;
 	released::Int;
 end
-
-struct Buffer 
-	x::Array{Cfloat};
-	ptr::Ref{Ptr{Cvoid}};
-	pointerSamples::Ref{Csize_t};
-	pointerError::Ref{error_code_t};
-	pointerFullSec::Ref{Clonglong};
-	pointerFracSec::Ref{Cdouble};
-end
-
-
-
-""" 
---- 
-Create a buffer structure to mutualize all needed ressource to populate an incoming buffer from UHD
-# --- Syntax 
-#	buffer = setBuffer(radio)
-# --- Input parameters 
--  radio  : UHD object [RadioRx]
-# --- Output parameters 
-- buffer  : Buffer structure [Buffer]
-# --- 
-# v 1.0 - Robin Gerzaguet.
-"""
-function setBuffer(radio)
-	# --- Instantiate buffer 
-	buff            = Vector{Cfloat}(undef,2*radio.packetSize);
-	# --- Convert it to void** 
-	ptr				= Ref(Ptr{Cvoid}(pointer(buff)));
-	# --- Pointer to recover number of samples received 
-	pointerSamples  = Ref{Csize_t}(0);
-	return Buffer(buff,ptr,pointerSamples,Ref{error_code_t}(),Ref{Clonglong}(),Ref{Cdouble}());
-end
-
-
 
 
 
@@ -113,10 +80,12 @@ function initRxUHD(sysImage)
 	@assert_uhd ccall((:uhd_rx_metadata_make, libUHD), uhd_error, (Ptr{Ptr{uhd_rx_metadata}},),addressMD);
 	# --- Get the usable object 
 	metadataPointer = addressMD[];
+	# --- Pointer for counting number of samples 
+	pointerSamples = Ref{Csize_t}(0);
 	# ---------------------------------------------------- 
 	# --- Create the USRP wrapper object  
 	# ---------------------------------------------------- 
-	uhd  = UHDRxWrapper(true,usrpPointer,streamerPointer,metadataPointer,addressUSRP,addressStream,addressMD);
+	uhd  = UHDRxWrapper(true,usrpPointer,streamerPointer,metadataPointer,addressUSRP,addressStream,addressMD,pointerSamples);
 	@info("Done init \n");
 	return uhd;
 end
@@ -387,13 +356,11 @@ Get a single buffer from the USRP device, and create all the necessary ressource
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function recv(radio,nbSamples)
-	# --- Create the buffer object to recover data 
-	buffer	= setBuffer(radio);
+function recv(radio,nbSamples);
 	# --- Create the global container 
 	sigRx	= zeros(Complex{Cfloat},nbSamples); 
 	# --- Populate the buffer 
-	nbSamples = getBuffer!(sigRx,radio,buffer);
+	nbSamples = recv!(sigRx,radio);
 	return sigRx 
 end 
 
@@ -413,49 +380,77 @@ Get a single buffer from the USRP device, using the Buffer structure
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function recv!(sig::Array{Complex{Cfloat}},radio::RadioRx,buffer::Buffer)
+function recv!(sig,radio::RadioRx;nbSamples=0,offset=0)
 	# --- Defined parameters for multiple buffer reception 
 	filled		= false;
-	posT		= Csize_t(0);
-	nbSamples	= Csize_t(length(sig));
+	# --- Fill the input buffer @ a specific offset 
+	if offset == 0 
+		posT		= Csize_t(0);
+	else 
+		posT 		= Csize_t(offset);
+	end
+	# --- Managing desired size and buffer size
+	if nbSamples == 0
+		# --- Fill all the buffer  
+		# x2 as input is complex and we feed real words
+		nbSamples	= Csize_t(length(sig));
+	else 
+		# ---  x2 as input is complex and we feed real words
+		nbSamples 	= Csize_t(nbSamples);
+		# --- Ensure that the allocation is possible
+		@assert nbSamples < (length(sig)+posT) "Impossible to fill the buffer (number of samples > residual size";
+	end
 	while !filled 
 		# --- Get a buffer: We should have radio.packetSize or less 
+		# radio.packetSize is the complex size, so x2
 		(posT+radio.packetSize> nbSamples) ? n = nbSamples - posT : n = radio.packetSize;
-		cSamples  = populateBuffer!(buffer,radio,n);
+		# --- To avoid memcopy, we direclty feed the pointer at the appropriate solution
+		ptr=Ref(Ptr{Cvoid}(pointer(sig,1+posT)));
+		# --- Populate buffer with radio samples
+		cSamples 	= populateBuffer!(radio,ptr,n);
+		# cSamples  = populateBuffer!(radio,n);
 		# --- Populate the complete buffer 
-		sig[posT .+ (1:cSamples)] .= reinterpret(Complex{Cfloat},@view buffer.x[1:2cSamples]);
+		# sig[posT .+ (1:cSamples)] .= reinterpret(Complex{Cfloat},@view radio.buffer.x[1:2cSamples]);
+		# sig[posT .+ (1:cSamples)] .= reinterpret(Complex{Cfloat},radio.buffer.x[1:2cSamples]);
 		# --- Update counters 
 		posT += cSamples; 
+		# @show Int(cSamples),Int(posT)
 		# --- Breaking flag
 		(posT == nbSamples) ? filled = true : filled = false;
-		#nb = nb + 1;
 	end
 	return posT
 end
 
+
+
 """ 
 --- 
-Populate the Buffer structure with ccall from UHD. 
+Calling UHD function wrapper to fill a buffer 
 # --- Syntax 
-populateBuffer!(buffer::Buffer,radio)
+	recv!(sig,radio,nbSamples)
 # --- Input parameters 
-- buffer  : Buffer structure [Buffer]
-- radio	  : Radio device [RadioRx]
+- radio	  	: Radio object [RadioRx]
+- ptr  		: Writable memory position [Ref{Ptr{Cvoid}}]
+- nbSamples : Number of samples to acquire 
 # --- Output parameters 
-- nbSamples	  : Complex samples obtained [Int]
+- nbSamp 	: Number of samples fill in buffer [Csize_t]
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function populateBuffer!(buffer::Buffer,radio,nbSamples::Csize_t=0)
+function populateBuffer!(radio,ptr,nbSamples::Csize_t=0)
 	# --- Getting number of samples 
 	# If not specified, we get back to radio.packetSize
-	nbSamples == 0 && nbSamples = radio.packetSize;
+	if (nbSamples == Csize_t(0)) 
+		nbSamples = radio.packetSize;
+	end 
 	#@assert nbSamples <= length(buffer.x) "Number of desired samples can not be greater than buffer size";
 	# --- Effectively recover data
-	ccall((:uhd_rx_streamer_recv, libUHD), Cvoid,(Ptr{uhd_rx_streamer},Ptr{Ptr{Cvoid}},Csize_t,Ptr{Ptr{uhd_rx_metadata}},Cfloat,Cint,Ref{Csize_t}),radio.uhd.pointerStreamer,buffer.ptr,nbSamples,radio.uhd.addressMD,1,false,buffer.pointerSamples);
+	ccall((:uhd_rx_streamer_recv, libUHD), Cvoid,(Ptr{uhd_rx_streamer},Ptr{Ptr{Cvoid}},Csize_t,Ptr{Ptr{uhd_rx_metadata}},Cfloat,Cint,Ref{Csize_t}),radio.uhd.pointerStreamer,ptr,nbSamples,radio.uhd.addressMD,1,false,radio.uhd.pointerSamples);
 		# --- Pointer deferencing 
-	return buffer.pointerSamples[];
+	return radio.uhd.pointerSamples[];
 end#
+
+
 
 """ 
 --- 
