@@ -27,7 +27,6 @@ function testRate(samplingRate)
 	# --- Get samples 
 	nbSamples = radio.packetSize;
 	sig		  = zeros(Complex{Cfloat},nbSamples); 
-	buffer	  = setBuffer(radio);
 	try 
 		#while(true)
 		bL		  = 0;
@@ -36,7 +35,7 @@ function testRate(samplingRate)
 		tFinal	= Any; 
 		while bL < nbRun
 			# --- Direct call to avoid allocation 
-			nS = recv!(sig,radio,buffer);
+			nS = recv!(sig,radio);
 			#nS = populateBuffer!(buffer,radio);
 			if bL == 0
 				tInit  = timeStamp(getTimestamp(buffer)...);
@@ -69,7 +68,6 @@ function bench()
 		# --- Get samples 
 		nbSamples = 20*radio.packetSize;
 		sig		  = zeros(Complex{Cfloat},nbSamples); 
-		buffer	  = setBuffer(radio);
 		try 
 			#while(true)
 			bL		  = 0;
@@ -78,7 +76,7 @@ function bench()
 			tFinal	= Any; 
 			while bL < nbRun
 				# --- Direct call to avoid allocation 
-				nS = recv!(sig,radio,buffer);
+				nS = recv!(sig,radio);
 				#nS = populateBuffer!(buffer,radio);
 				if bL == 0
 					tInit  = timeStamp(getTimestamp(buffer)...);

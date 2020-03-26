@@ -29,10 +29,9 @@ function getDataSequential(radio)
 	try
 		timeInit  = time();
 		bA		  = 0;
-		buffer = setBuffer(radio);
 		sig    = zeros(Complex{Cfloat},radio.packetSize);
 		while(true)
-			recv!(sig,radio,buffer);
+			recv!(sig,radio);
 			processingData(sig);
 			bA	  += length(sig);
 			if mod(bA,100000) == 0
@@ -52,10 +51,9 @@ end
 function produceData(chnl,radio)
 	try
 		sig    = zeros(Complex{Cfloat},radio.packetSize);
-		buffer = setBuffer(radio);
 		while doTask 
 			# --- Populate a buffer from the USRP 
-			recv!(sig,radio,buffer);
+			recv!(sig,radio);
 			# --- Set the buffer in the common shared channel 
 			put!(chnl,sig)
 			# --- Force actualisation of state (otherwise cannot have break)
@@ -130,7 +128,6 @@ function mainThread()
 	start();
 	# --- Update x310 configuration
 	radio = setRxRadio("",carrierFreq,100e6,rxGain); 
-	buffer = setBuffer(radio);
 	# --- Create handler 
 	chnl	= Channel{Array{Complex{Cfloat}}}(0);
 	# ----------------------------------------------------

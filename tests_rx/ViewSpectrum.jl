@@ -45,14 +45,13 @@ function hostSpectrum(nFFT);
 	xAx		        = ((collect(0:nFFT-1) ./ nFFT) .-0.5) .*  round(radio.samplingRate,digits=2);
 	fMHz	= round(radio.carrierFreq / 1e6, digits=3) ;
 	sig				= zeros(Complex{Cfloat},nFFT); 
-	buffer			= setBuffer(radio);
 	while(true)
 		sF .= 0;
 		for iN  = 1 : 1 : nbSegMean
 			# --- Getting samples
 			#@suppress_err let 	
 			@suppress let 	
-				recv!(sig,radio,buffer);
+				recv!(sig,radio);
 			end
 			#@show err = getError(buffer);
 			y	  .= abs2.(fftshift(fft(@view sig[1:nFFT])));

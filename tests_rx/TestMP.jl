@@ -59,10 +59,9 @@ end
 @everywhere function produceData(chnl,radio)
 	try
 		sig    = zeros(Complex{Cfloat},radio.packetSize);
-		buffer = setBuffer(radio);
 		while doTask 
 			# --- Populate a buffer from the USRP 
-			recv!(sig,radio,buffer);
+			recv!(sig,radio);
 			# --- Set the buffer in the common shared channel 
 			put!(chnl,sig)
 			# --- Force actualisation of state (otherwise cannot have break)
@@ -138,7 +137,6 @@ function main()
 	start();
 	# --- Update x310 configuration
 	radio = setRxRadio("",carrierFreq,100e6,rxGain); 
-	buffer = setBuffer(radio);
 	# --- Create handler 
 	chnl	= RemoteChannel(()->Channel{Array{Complex{Cfloat}}}(0));
 	# ----------------------------------------------------
@@ -167,7 +165,6 @@ function mainThread()
 	start();
 	# --- Update x310 configuration
 	radio = setRxRadio("",carrierFreq,100e6,rxGain); 
-	buffer = setBuffer(radio);
 	# --- Create handler 
 	chnl	= Channel{Array{Complex{Cfloat}}}(0);
 	# ----------------------------------------------------
