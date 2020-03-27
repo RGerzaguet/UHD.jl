@@ -11,7 +11,7 @@ using .ConnectPC
 
 function main(carrierFreq,samplingRate,gain,nbSamples)
 	# --- Setting a very first configuration 
-	global radio = setRxRadio("",carrierFreq,samplingRate,gain); 
+	global radio = openRadioRx("",carrierFreq,samplingRate,gain); 
 	print(radio);
 	# --- Get samples 
 	sig		  = zeros(Complex{Cfloat},nbSamples); 

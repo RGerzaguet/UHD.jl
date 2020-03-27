@@ -18,7 +18,7 @@ function main()
 	nbSamples		= 1000;
 
 	# --- Setting a very first configuration 
-	radio = setRxRadio("",carrierFreq,samplingRate,gain); 
+	radio = openRadioRx("",carrierFreq,samplingRate,gain); 
 	print(radio);
 	# --- Get samples 
 	nbSamples = 4096; 

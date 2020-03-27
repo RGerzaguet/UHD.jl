@@ -43,7 +43,7 @@ function main()
 	nbSamples		= 1000;
 
 	# --- Setting a very first configuration 
-	global radio = setRxRadio("",carrierFreq,samplingRate,gain); 
+	global radio = openRadioRx("",carrierFreq,samplingRate,gain); 
 	print(radio);
 	# --- Get samples 
 	nbSamples = 4096; 
@@ -147,7 +147,7 @@ function bench()
 	benchPerf	= zeros(Float64,length(fftVect),length(rateVect));
 	radioRate	= zeros(Float64,length(rateVect));
 	# --- Setting a very first configuration 
-	radio = setRxRadio("",carrierFreq,1e6,gain); 
+	radio = openRadioRx("",carrierFreq,1e6,gain); 
 	for (iR,targetRate) in enumerate(rateVect)
 		for (iN,fftSize) in enumerate(fftVect)
 			# --- Calling method 

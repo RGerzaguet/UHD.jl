@@ -212,7 +212,7 @@ function main()
 	nFFT 		              = 2048;
 	nbTime					  = 32;
 	# --- Update radio configuration
-	global radio			= setRxRadio("",carrierFreq,sampleRate,gainRx); 
+	global radio			= openRadioRx("",carrierFreq,sampleRate,gainRx); 
 	@async task =  hostSpectrum(nFFT,nbTime);
 
 end

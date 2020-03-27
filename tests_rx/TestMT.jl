@@ -127,7 +127,7 @@ function mainThread()
 	doTask				= 1;
 	start();
 	# --- Update x310 configuration
-	radio = setRxRadio("",carrierFreq,100e6,gain); 
+	radio = openRadioRx("",carrierFreq,100e6,gain); 
 	# --- Create handler 
 	chnl	= Channel{Array{Complex{Cfloat}}}(0);
 	# ----------------------------------------------------
@@ -153,7 +153,7 @@ function mainSeq()
 	gain              = -3;
 	start();
 	# --- Update e310 configuration
-	radio = setRxRadio("",carrierFreq,100e6,gain); 
+	radio = openRadioRx("",carrierFreq,100e6,gain); 
 	# ----------------------------------------------------
 	# --- P1 : Getting data
 	# ----------------------------------------------------

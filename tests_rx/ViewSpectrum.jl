@@ -221,7 +221,7 @@ function main()
 	global nbSegMean 		  = 32; 		  # --- Number of mean
 	nFFT 		              = 2048;
 	# --- Update radio configuration
-	global radio			= setRxRadio("",carrierFreq,sampleRate,gainRx); 
+	global radio			= openRadioRx("",carrierFreq,sampleRate,gainRx); 
 	@async task =  hostSpectrum(nFFT);
 
 end

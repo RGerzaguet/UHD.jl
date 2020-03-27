@@ -18,7 +18,7 @@ function main()
 	gain			= 50.0; 
 	nbSamples		= 1000;
 	# --- Setting a very first configuration 
-	global radio = setTxRadio("",carrierFreq,samplingRate,gain); 
+	global radio = openRadioTx("",carrierFreq,samplingRate,gain); 
 	print(radio);
 	# --- Get samples 
     buffer	= randn(Complex{Cfloat},radio.packetSize);

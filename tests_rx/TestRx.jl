@@ -20,7 +20,7 @@ function main()
 	@printf("done -- \n");
 
 	# --- Setting a very first configuration 
-	global radio = setRxRadio("",carrierFreq,samplingRate,gain); 
+	global radio = openRadioRx("",carrierFreq,samplingRate,gain); 
 	#print(radio);
 	# --- Get samples 
 	#@show sigAll	= getSingleBuffer(radio);
