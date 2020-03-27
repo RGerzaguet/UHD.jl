@@ -320,11 +320,11 @@ function updateCarrierFreq!(radio::RadioTx, carrierFreq)
 	ccall((:uhd_usrp_get_tx_freq, libUHD), Cvoid, (Ptr{uhd_usrp}, Csize_t, Ref{Cdouble}), radio.uhd.pointerUSRP, 0, pointerCarrierFreq); 
 	updateCarrierFreq	= pointerCarrierFreq[];
 	if updateCarrierFreq != carrierFreq 
-		@warn "Effective carrier frequency is $(updateCarrierFreq / 1e6) MHz and not $(carrierFreq / 1e6) Hz\n" 
+		@warn "Effective carrier frequency is $(updateCarrierFreq / 1e6) MHz and not $(carrierFreq / 1e6) MHz\n" 
 	else 
 		@info "Effective carrier frequency is $(updateCarrierFreq / 1e6) MHz\n";
 	end	
-	radio.carrierFreq = carrierFreq;
+	radio.carrierFreq = updateCarrierFreq;
 end
 
 """ 

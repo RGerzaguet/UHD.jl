@@ -149,7 +149,7 @@ function openRadioRx(sysImage,carrierFreq,samplingRate,gain,antenna="RX2")
 	ccall((:uhd_usrp_get_rx_freq, libUHD), Cvoid, (Ptr{uhd_usrp}, Csize_t, Ref{Cdouble}),uhd.pointerUSRP,0,pointerCarrierFreq); 
 	updateCarrierFreq	= pointerCarrierFreq[];
 	if updateCarrierFreq != carrierFreq 
-		@warn "Effective carrier frequency is $(updateCarrierFreq/1e6) MHz and not $(carrierFreq/1e6) Hz\n" 
+		@warn "Effective carrier frequency is $(updateCarrierFreq/1e6) MHz and not $(carrierFreq/1e6) MHz\n" 
 	else 
 		@info "Effective carrier frequency is $(updateCarrierFreq/1e6) MHz\n";
 	end	
@@ -354,8 +354,8 @@ function updateCarrierFreq!(radio::RadioRx,carrierFreq)
 	else 
 		@info "Effective carrier frequency is $(updateCarrierFreq/1e6) MHz\n";
 	end	
-	radio.carrierFreq = carrierFreq;
-	return carrierFreq;
+	radio.carrierFreq = updateCarrierFreq;
+	return updateCarrierFreq;
 end
 
 """ 
