@@ -182,7 +182,7 @@ end
 --- 
 Close the USRP device (Tx mode) and release all associated objects
 # --- Syntax 
-#	free(uhd)
+#	close(uhd)
 # --- Input parameters 
 - uhd	: UHD object [RadioTx]
 # --- Output parameters 
@@ -190,7 +190,7 @@ Close the USRP device (Tx mode) and release all associated objects
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function free(radio::RadioTx)
+function close(radio::RadioTx)
 	# --- Checking realease nature 
 	# There is one flag to avoid double free (that leads to seg fault) 
 	if radio.released == 0
@@ -198,7 +198,7 @@ function free(radio::RadioTx)
 		@assert_uhd  ccall((:uhd_usrp_free, libUHD), uhd_error, (Ptr{Ptr{uhd_usrp}},), radio.uhd.addressUSRP);
 		@assert_uhd ccall((:uhd_tx_streamer_free, libUHD), uhd_error, (Ptr{Ptr{uhd_tx_streamer}},), radio.uhd.addressStream);
 		@assert_uhd ccall((:uhd_tx_metadata_free, libUHD), uhd_error, (Ptr{Ptr{uhd_tx_metadata}},), radio.uhd.addressMD);
-		@info "USRP device is now free.";
+		@info "USRP device is now closed.";
 	else 
 		# print a warning  
 		@warn "UHD ressource was already released, abort call";

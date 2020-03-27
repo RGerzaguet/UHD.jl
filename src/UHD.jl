@@ -77,7 +77,7 @@ export updateSamplingRate!
 export updateGain!
 export updateCarrierFreq!
 export print; 
-export free;
+export close;
 
 
 end # module

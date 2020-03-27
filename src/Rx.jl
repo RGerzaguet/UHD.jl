@@ -198,7 +198,7 @@ end
 --- 
 Close the USRP device (Rx mode) and release all associated objects
 # --- Syntax 
-#	free(uhd)
+#	close(uhd)
 # --- Input parameters 
 - uhd	: UHD object [RadioRx]
 # --- Output parameters 
@@ -206,9 +206,9 @@ Close the USRP device (Rx mode) and release all associated objects
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function free(radio::RadioRx)
+function close(radio::RadioRx)
 	# --- Checking realease nature 
-	# There is one flag to avoid double free (that leads to seg fault) 
+	# There is one flag to avoid double close (that leads to seg fault) 
 	if radio.released == 0
 		print("\n");
 		@info "Catch exception, release UHD related ressources"
@@ -216,7 +216,7 @@ function free(radio::RadioRx)
 		@assert_uhd  ccall((:uhd_usrp_free, libUHD), uhd_error, (Ptr{Ptr{uhd_usrp}},),radio.uhd.addressUSRP);
 		#@assert_uhd ccall((:uhd_rx_streamer_free, libUHD), uhd_error, (Ptr{Ptr{uhd_rx_streamer}},),radio.uhd.addressStream);
 		#@assert_uhd ccall((:uhd_rx_metadata_free, libUHD), uhd_error, (Ptr{Ptr{uhd_rx_metadata}},),radio.uhd.addressMD);
-		@info "USRP device is now free.";
+		@info "USRP device is now closed.";
 	else 
 		# print a warning  
 		@warn "UHD ressource was already released, abort call";
@@ -299,7 +299,7 @@ Update gain of current radio device, and update radio object with the new obtain
 - radio	  : Radio device [RadioRx]
 - gain	: New desired gain 
 # --- Output parameters 
-- 
+- gain 	: Current radio gain
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
@@ -321,8 +321,22 @@ function updateGain!(radio::RadioRx,gain)
 		@info "Effective gain is $(updateGain) dB\n";
 	end 
 	radio.rxGain = updateGain;
+	return updateGain;
 end
 
+""" 
+--- 
+Update carrier frqeuecncy of current radio device, and update radio object with the new obtained carrier frequency 
+--- Syntax 
+  updateCarrierFreq!(radio,carrierFreq)
+# --- Input parameters 
+- radio	  : Radio device [RadioRx]
+- carrierFreq	: New desired carrier freq 
+# --- Output parameters 
+- carrierFreq 	: Current radio carrier frequency 
+# --- 
+# v 1.0
+"""
 function updateCarrierFreq!(radio::RadioRx,carrierFreq)
 	# ---------------------------------------------------- 
 	# --- Carrier Frequency configuration  
@@ -341,6 +355,7 @@ function updateCarrierFreq!(radio::RadioRx,carrierFreq)
 		@info "Effective carrier frequency is $(updateCarrierFreq/1e6) MHz\n";
 	end	
 	radio.carrierFreq = carrierFreq;
+	return carrierFreq;
 end
 
 """ 
