@@ -326,7 +326,7 @@ end
 
 """ 
 --- 
-Update carrier frqeuecncy of current radio device, and update radio object with the new obtained carrier frequency 
+Update carrier frequency of current radio device, and update radio object with the new obtained carrier frequency 
 --- Syntax 
   updateCarrierFreq!(radio,carrierFreq)
 # --- Input parameters 

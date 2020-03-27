@@ -294,6 +294,19 @@ function updateGain!(radio::RadioTx, gain)
 	radio.txGain = updateGain;
 end
 
+""" 
+--- 
+Update carrier frequency of current radio device, and update radio object with the new obtained carrier frequency 
+--- Syntax 
+  updateCarrierFreq!(radio,carrierFreq)
+# --- Input parameters 
+- radio	  : Radio device [RadioRx]
+- carrierFreq	: New desired carrier freq 
+# --- Output parameters 
+- carrierFreq 	: Current radio carrier frequency 
+# --- 
+# v 1.0
+"""
 function updateCarrierFreq!(radio::RadioTx, carrierFreq)
 	# ---------------------------------------------------- 
 	# --- Carrier Frequency configuration  
@@ -314,7 +327,20 @@ function updateCarrierFreq!(radio::RadioTx, carrierFreq)
 	radio.carrierFreq = carrierFreq;
 end
 
-
+""" 
+--- 
+Send a buffer though the radio device. It is possible to force a cyclic buffer send (the radio uninterruply send the same buffer) by setting the cyclic parameter to true
+--- Syntax 
+	send(radio,buffer,cyclic=false)
+# --- Input parameters 
+- radio	  	: Radio device [RadioRx]
+- buffer 	: Buffer to be send [Union{Array{Complex{Cfloat}},Array{Cfloat}}] 
+- cyclic 	: Send same buffer multiple times (default false) [Bool]
+# --- Output parameters 
+- nbEch 	: Number of samples effectively send [Csize_t]. It corresponds to the number of complex samples sent.
+# --- 
+# v 1.0
+"""
 function send(radio::RadioTx, buffer::Union{Array{Complex{Cfloat}},Array{Cfloat}}, cyclic::Bool = false)
 	# --- Global pointer 
 	ptr				= Ref(Ptr{Cvoid}(pointer(buffer)));
