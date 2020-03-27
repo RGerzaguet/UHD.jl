@@ -132,11 +132,11 @@ function main()
 	# --- Main configuration
 	carrierFreq         = 156e6;
 	bandwidth           = 6e6;
-	rxGain              = -3;
+	gain              = -3;
 	doTask				= 1;
 	start();
 	# --- Update x310 configuration
-	radio = setRxRadio("",carrierFreq,100e6,rxGain); 
+	radio = setRxRadio("",carrierFreq,100e6,gain); 
 	# --- Create handler 
 	chnl	= RemoteChannel(()->Channel{Array{Complex{Cfloat}}}(0));
 	# ----------------------------------------------------
@@ -160,11 +160,11 @@ function mainThread()
 	# --- Main configuration
 	carrierFreq         = 156e6;
 	bandwidth           = 6e6;
-	rxGain              = -3;
+	gain              = -3;
 	doTask				= 1;
 	start();
 	# --- Update x310 configuration
-	radio = setRxRadio("",carrierFreq,100e6,rxGain); 
+	radio = setRxRadio("",carrierFreq,100e6,gain); 
 	# --- Create handler 
 	chnl	= Channel{Array{Complex{Cfloat}}}(0);
 	# ----------------------------------------------------
@@ -187,10 +187,10 @@ function mainSeq()
 	# --- Main configuration
 	carrierFreq         = 156e6;
 	bandwidth           = 6e6;
-	rxGain              = -3;
+	gain              = -3;
 	start();
 	# --- Update e310 configuration
-	radio = setRxRadio("",carrierFreq,bandwidth,rxGain); 
+	radio = setRxRadio("",carrierFreq,bandwidth,gain); 
 	print(radio);
 	# ----------------------------------------------------
 	# --- P1 : Getting data
@@ -205,10 +205,10 @@ function mainAsync()
 	# --- Main configuration
 	carrierFreq         = 156e6;
 	bandwidth           = 3e6;
-	rxGain              = -3;
+	gain              = -3;
 	start();
 	# --- Update e310 configuration
-	global radio = setRxRadio("",carrierFreq,100e6,rxGain); 
+	global radio = setRxRadio("",carrierFreq,100e6,gain); 
 	# ----------------------------------------------------
 	# --- P1 : Getting data
 	# ----------------------------------------------------

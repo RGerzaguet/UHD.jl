@@ -9,9 +9,9 @@ include("../ConnectPC.jl");
 using .ConnectPC 
 
 
-function main(carrierFreq,samplingRate,rxGain,nbSamples)
+function main(carrierFreq,samplingRate,gain,nbSamples)
 	# --- Setting a very first configuration 
-	global radio = setRxRadio("",carrierFreq,samplingRate,rxGain); 
+	global radio = setRxRadio("",carrierFreq,samplingRate,gain); 
 	print(radio);
 	# --- Get samples 
 	sig		  = zeros(Complex{Cfloat},nbSamples); 

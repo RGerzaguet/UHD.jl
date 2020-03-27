@@ -20,9 +20,9 @@ end
 
 function testRate(samplingRate)
 	carrierFreq		= 770e6;		
-	rxGain			= 10.0; 
+	gain			= 10.0; 
 	# --- Setting a very first configuration 
-	radio = setRxRadio("",carrierFreq,samplingRate,rxGain); 
+	radio = setRxRadio("",carrierFreq,samplingRate,gain); 
 	print(radio);
 	# --- Get samples 
 	nbSamples = radio.packetSize;
@@ -56,12 +56,12 @@ end
 
 function bench()
 	carrierFreq		= 770e6;		
-	rxGain			= 10.0; 
+	gain			= 10.0; 
 	tRate	= collect(1e6:2e6:200e6);
 	oRate	= zeros(Float64,length(tRate));
 	fRate	= zeros(Float64,length(tRate));
 	# --- Setting a very first configuration 
-	radio = setRxRadio("",carrierFreq,100e6,rxGain); 
+	radio = setRxRadio("",carrierFreq,100e6,gain); 
 	for (i,r) in enumerate(tRate) 
 		updateSamplingRate!(radio,r);
 		print(radio);

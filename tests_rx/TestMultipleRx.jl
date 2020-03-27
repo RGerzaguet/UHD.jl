@@ -14,11 +14,11 @@ function main()
 	# ---------------------------------------------------- 
 	carrierFreq		= 770e6;		
 	samplingRate	= 100e6; 
-	rxGain			= 50.0; 
+	gain			= 50.0; 
 	nbSamples		= 1000;
 
 	# --- Setting a very first configuration 
-	radio = setRxRadio("",carrierFreq,samplingRate,rxGain); 
+	radio = setRxRadio("",carrierFreq,samplingRate,gain); 
 	print(radio);
 	# --- Get samples 
 	nbSamples = 4096; 

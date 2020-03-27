@@ -15,10 +15,10 @@ function main()
 	# ---------------------------------------------------- 
 	carrierFreq		= 770e6;		
 	samplingRate	= 8e6; 
-	txGain			= 50.0; 
+	gain			= 50.0; 
 	nbSamples		= 1000;
 	# --- Setting a very first configuration 
-	global radio = setTxRadio("",carrierFreq,samplingRate,txGain); 
+	global radio = setTxRadio("",carrierFreq,samplingRate,gain); 
 	print(radio);
 	# --- Get samples 
     buffer	= randn(Complex{Cfloat},radio.packetSize);

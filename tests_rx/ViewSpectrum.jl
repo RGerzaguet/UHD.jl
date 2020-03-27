@@ -78,7 +78,7 @@ function hostSpectrum(nFFT);
 	end
 	# --- Release USRP 
 	buffer = Any;
-	free(radio);
+	close(radio);
 end
 
 """ killSpectrum

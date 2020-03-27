@@ -14,13 +14,13 @@ function main()
 	# ---------------------------------------------------- 
 	carrierFreq		= 770e6;		
 	samplingRate	= 100e6; 
-	rxGain			= 50.0; 
+	gain			= 50.0; 
 	nbSamples		= 1000;
 
 	@printf("done -- \n");
 
 	# --- Setting a very first configuration 
-	global radio = setRxRadio("",carrierFreq,samplingRate,rxGain); 
+	global radio = setRxRadio("",carrierFreq,samplingRate,gain); 
 	#print(radio);
 	# --- Get samples 
 	#@show sigAll	= getSingleBuffer(radio);
@@ -31,7 +31,7 @@ function main()
 	#@show sigAll	= recv(radio,nbSamples);
 #sigAll	= getSingleBuffer(radio);
 	# --- Release USRP 
-	free(radio);
+	close(radio);
 end
 
 

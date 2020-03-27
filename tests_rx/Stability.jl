@@ -17,7 +17,7 @@ end
 
 struct Res 
 	carrierFreq::Float64;
-	rxGain::Float64;	
+	gain::Float64;	
 	rateVect::Array{Float64};
 	fftVect::Array{Float64};
 	benchPerf::Array{Float64};
@@ -39,11 +39,11 @@ function main()
 	# ---------------------------------------------------- 
 	carrierFreq		= 770e6;		
 	samplingRate	= 8e6; 
-	rxGain			= 50.0; 
+	gain			= 50.0; 
 	nbSamples		= 1000;
 
 	# --- Setting a very first configuration 
-	global radio = setRxRadio("",carrierFreq,samplingRate,rxGain); 
+	global radio = setRxRadio("",carrierFreq,samplingRate,gain); 
 	print(radio);
 	# --- Get samples 
 	nbSamples = 4096; 
@@ -73,8 +73,8 @@ function mainFFT(radio,samplingRate,nbSamples)
 	if radio == Any;
 		# --- Create the radio object in function
 		carrierFreq		= 770e6;		
-		rxGain			= 50.0; 
-		radio			= open("Rx","",carrierFreq,samplingRate,rxGain); 
+		gain			= 50.0; 
+		radio			= open("Rx","",carrierFreq,samplingRate,gain); 
 		toRelease		= true;
 	else 
 		# --- Call from a method that have degined radio 
@@ -139,7 +139,7 @@ function bench()
 	setMaxPiority();
 	# --- Configuration
 	carrierFreq		= 770e6;		
-	rxGain			= 50.0; 
+	gain			= 50.0; 
 	rateVect	= [1e3;100e3;500e3;1e6:1e6:16e6];
 	fftVect		= [64;128;256;512;1016;1024;2048;2*1016;4*1016];
 	# fftVect		= [1024]
@@ -147,7 +147,7 @@ function bench()
 	benchPerf	= zeros(Float64,length(fftVect),length(rateVect));
 	radioRate	= zeros(Float64,length(rateVect));
 	# --- Setting a very first configuration 
-	radio = setRxRadio("",carrierFreq,1e6,rxGain); 
+	radio = setRxRadio("",carrierFreq,1e6,gain); 
 	for (iR,targetRate) in enumerate(rateVect)
 		for (iN,fftSize) in enumerate(fftVect)
 			# --- Calling method 
@@ -162,7 +162,7 @@ function bench()
 		end
 	end
 	close(radio);
-	strucRes  = Res(carrierFreq,rxGain,rateVect,fftVect,benchPerf,radioRate);
+	strucRes  = Res(carrierFreq,gain,rateVect,fftVect,benchPerf,radioRate);
 	return strucRes;
 end
 
