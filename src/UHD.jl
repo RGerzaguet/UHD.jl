@@ -54,7 +54,6 @@ export UHDRxWrapper
 export initRxUHD; 
 export setRxRadio;
 export recv,recv!;
-export setBuffer
 export populateBuffer!
 export getError, getTimestamp
 
@@ -104,11 +103,11 @@ function open(mode::String,sysImage, carrierFreq, samplingRate, txGain, antenna 
 		# --- Open radio in Rx mode 
 		 radio 	 = setRxRadio(sysImage, carrierFreq, samplingRate, txGain, antenna);
 	else 
-		@error "Unknown mode for radio config. First parameter should be Tx or Rx (String)".
+		@error "Unknown mode for radio config. First parameter should be Tx or Rx (String)";
 	end
 	return radio;
 end
-export open
+export open;
 
 
 end # module

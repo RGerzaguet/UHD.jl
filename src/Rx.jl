@@ -206,7 +206,7 @@ Close the USRP device (Rx mode) and release all associated objects
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function close(radio::RadioRx)
+function Base.close(radio::RadioRx)
 	# --- Checking realease nature 
 	# There is one flag to avoid double close (that leads to seg fault) 
 	if radio.released == 0

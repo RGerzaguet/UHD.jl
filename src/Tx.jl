@@ -190,7 +190,7 @@ Close the USRP device (Tx mode) and release all associated objects
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function close(radio::RadioTx)
+function Base.close(radio::RadioTx)
 	# --- Checking realease nature 
 	# There is one flag to avoid double free (that leads to seg fault) 
 	if radio.released == 0
