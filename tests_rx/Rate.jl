@@ -44,11 +44,11 @@ function testRate(samplingRate)
 		end
 		tFinal= timeStamp(getTimestamp(buffer)...);
 		@show rate  = getRate(tInit,tFinal,bL);
-		free(radio);
+		close(radio);
 		return rate, radio.samplingRate;
 	catch exception;
 		# --- Release USRP 
-		free(radio);
+		close(radio);
 		@show exception;
 	end
 end
@@ -90,12 +90,12 @@ function bench()
 		catch exception;
 			# --- Release USRP 
 			buffer = Any;
-			free(radio);
+			close(radio);
 			@show exception;
 		end
 	end
 	buffer = Any;
-	free(radio);
+	close(radio);
 	# --- Figure 
 	layout = Plotly.Layout(;title="Rate  ",
 						   xaxis_title="Desired rate  ",

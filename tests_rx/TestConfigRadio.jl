@@ -31,7 +31,7 @@ function main()
 	
 	updateSamplingRate!(radio,16e6);
 	# --- Release USRP 
-	free(radio);
+	close(radio);
 end
 
 

@@ -45,7 +45,7 @@ end
 			print("\rUSRP rate is $(currRate) MS/s");
 		end
 	catch exception;
-		free(radio);
+		close(radio);
 		rethrow(exception);
 	end
 end
@@ -69,10 +69,10 @@ end
 		end
 		# --- Free environment
 		buffer = Any;
-		free(radio);
+		close(radio);
 	catch exception;
 		# --- Free environment in case of exception
-		free(radio);
+		close(radio);
 		rethrow(exception);
 	end
 end

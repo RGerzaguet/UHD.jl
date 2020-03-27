@@ -31,7 +31,7 @@ function main()
 	#end
 	@show Int(nbEch);
 	# --- Release USRP 
-	free(radio);
+	close(radio);
 end
 
 end

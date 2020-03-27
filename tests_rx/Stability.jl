@@ -56,10 +56,10 @@ function main()
 			cnt += 1;
 			#print("\rProcessed $(cnt) bursts");
 		end
-		free(radio);
+		close(radio);
 	catch exception;
 		# --- Release USRP 
-		free(radio);
+		close(radio);
 		@show exception;
 	end
 end
@@ -121,7 +121,7 @@ function mainFFT(radio,samplingRate,nbSamples)
 	effectiveRate = getRate(timeInit, timeFinal, nS);
 	# --- Free all and return
 	if toRelease 
-		free(radio);
+		close(radio);
 	end
 	return (radioRate,effectiveRate);
 end
@@ -161,7 +161,7 @@ function bench()
 			print("$eR MS/s -- $cR MS/s\n");
 		end
 	end
-	free(radio);
+	close(radio);
 	strucRes  = Res(carrierFreq,rxGain,rateVect,fftVect,benchPerf,radioRate);
 	return strucRes;
 end

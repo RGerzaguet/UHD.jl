@@ -45,11 +45,11 @@ function main()
 			#@show getTimestamp(buffer);
 			cnt += 1;
 		end
-		free(radio);
+		close(radio);
 		return sig;
 	catch exception;
 		# --- Release USRP 
-		free(radio);
+		close(radio);
 		@show exception;
 		return sig;
 	end
