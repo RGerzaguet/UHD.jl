@@ -26,7 +26,7 @@ mutable struct RadioTx
 	uhd::UHDTxWrapper;
 	carrierFreq::Float64;
 	samplingRate::Float64;
-	txGain::Union{Int,Float64}; 
+	gain::Union{Int,Float64}; 
 	antenna::String;
 	packetSize::Csize_t;
 	released::Int;
@@ -83,19 +83,19 @@ end
 --- 
 Init the core parameter of the radio in Tx mode and initiate RF parameters 
 --- Syntax 
-setTxRadio(sysImage,carrierFreq,samplingRate,txGain,antenna="TX/RX")
+setTxRadio(sysImage,carrierFreq,samplingRate,gain,antenna="TX/RX")
 # --- Input parameters 
 - sysImage	  : String with the additionnal load parameters (for instance, path to the FPHGA image) [String]
 - carrierFreq	: Desired Carrier frequency [Union{Int,Float64}] 
 - samplingRate	: Desired bandwidth [Union{Int,Float64}] 
-- txGain		: Desired Tx Gain [Union{Int,Float64}] 
+- gain		: Desired Tx Gain [Union{Int,Float64}] 
 - antenna		: Desired Antenna alias [String] (default "TX/RX");
 # --- Output parameters 
 - RadioTx		  	: UHD Tx object with PHY parameters [RadioTx]  
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function setTxRadio(sysImage, carrierFreq, samplingRate, txGain, antenna = "TX/RX")
+function setTxRadio(sysImage, carrierFreq, samplingRate, gain, antenna = "TX/RX")
 	# ---------------------------------------------------- 
 	# --- Init  UHD object  
 	# ---------------------------------------------------- 
@@ -145,14 +145,14 @@ function setTxRadio(sysImage, carrierFreq, samplingRate, txGain, antenna = "TX/R
 	# --- Gain configuration  
 	# ---------------------------------------------------- 
 	# Update the UHD sampling rate 
-	ccall((:uhd_usrp_set_tx_gain, libUHD), Cvoid, (Ptr{uhd_usrp}, Cdouble, Csize_t, Cstring), uhd.pointerUSRP, txGain, 0, "");
+	ccall((:uhd_usrp_set_tx_gain, libUHD), Cvoid, (Ptr{uhd_usrp}, Cdouble, Csize_t, Cstring), uhd.pointerUSRP, gain, 0, "");
 	# Get the updated gain from UHD 
 	pointerGain	  = Ref{Cdouble}(0);
 	ccall((:uhd_usrp_get_tx_gain, libUHD), Cvoid, (Ptr{uhd_usrp}, Csize_t, Cstring, Ref{Cdouble}), uhd.pointerUSRP, 0, "", pointerGain);
 	updateGain	  = pointerGain[]; 
 	# --- Print a flag 
-	if updateGain != txGain 
-		@warn "Effective gain is $(updateGain) dB and not $(txGain) dB\n" 
+	if updateGain != gain 
+		@warn "Effective gain is $(updateGain) dB and not $(gain) dB\n" 
 	else 
 		@info "Effective gain is $(updateGain) dB\n";
 	end 
@@ -278,7 +278,7 @@ function updateGain!(radio::RadioTx, gain)
 	# ---------------------------------------------------- 
 	# --- Sampling rate configuration  
 	# ---------------------------------------------------- 
-	@info  "Try to change gain from $(radio.txGain) dB to $(gain) dB";
+	@info  "Try to change gain from $(radio.gain) dB to $(gain) dB";
 	# Update the UHD sampling rate 
 	ccall((:uhd_usrp_set_tx_gain, libUHD), Cvoid, (Ptr{uhd_usrp}, Cdouble, Csize_t, Cstring), radio.uhd.pointerUSRP, gain, 0, "");
 	# Get the updated gain from UHD 
@@ -291,7 +291,7 @@ function updateGain!(radio::RadioTx, gain)
 	else 
 		@info "Effective gain is $(updateGain) dB\n";
 	end 
-	radio.txGain = updateGain;
+	radio.gain = updateGain;
 end
 
 """ 

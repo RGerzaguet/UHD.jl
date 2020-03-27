@@ -95,7 +95,7 @@ open(mode,sysImage,carrierFreq,samplingRate,txGain,antenna="TX/RX")
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """ 
-function open(mode::String,sysImage, carrierFreq, samplingRate, txGain, antenna = "TX/RX")
+function Base.open(mode::String,sysImage, carrierFreq, samplingRate, txGain, antenna = "TX/RX")
 	if mode == "Tx" 
 		# --- Open radio in Tx mode 
 		 radio 	 = setTxRadio(sysImage, carrierFreq, samplingRate, txGain, antenna);

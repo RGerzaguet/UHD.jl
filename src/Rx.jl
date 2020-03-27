@@ -34,7 +34,7 @@ mutable struct RadioRx
 	uhd::UHDRxWrapper;
 	carrierFreq::Float64;
 	samplingRate::Float64;
-	rxGain::Union{Int,Float64}; 
+	gain::Union{Int,Float64}; 
 	antenna::String;
 	packetSize::Csize_t;
 	released::Int;
@@ -95,19 +95,19 @@ end
 --- 
 Init the core parameter of the radio (Rx mode) and initiate RF parameters 
 --- Syntax 
-setRxRadio(sysImage,carrierFreq,samplingRate,rxGain,antenna="TX/RX")
+setRxRadio(sysImage,carrierFreq,samplingRate,gain,antenna="TX/RX")
 # --- Input parameters 
 - sysImage	  : String with the additionnal load parameters (for instance, path to the FPHGA image) [String]
 - carrierFreq	: Desired Carrier frequency [Union{Int,Float64}] 
 - samplingRate	: Desired bandwidth [Union{Int,Float64}] 
-- rxGain		: Desired Rx Gain [Union{Int,Float64}] 
+- gain		: Desired Rx Gain [Union{Int,Float64}] 
 - antenna		: Desired Antenna alias [String] (default "TX/RX");
 # --- Output parameters 
 - RadioRx		  	: UHD Rx object with PHY parameters [RadioRx]  
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function setRxRadio(sysImage,carrierFreq,samplingRate,rxGain,antenna="RX2")
+function setRxRadio(sysImage,carrierFreq,samplingRate,gain,antenna="RX2")
 	# ---------------------------------------------------- 
 	# --- Init  UHD object  
 	# ---------------------------------------------------- 
@@ -157,14 +157,14 @@ function setRxRadio(sysImage,carrierFreq,samplingRate,rxGain,antenna="RX2")
 	# --- Gain configuration  
 	# ---------------------------------------------------- 
 	# Update the UHD sampling rate 
-	ccall((:uhd_usrp_set_rx_gain, libUHD), Cvoid, (Ptr{uhd_usrp}, Cdouble, Csize_t, Cstring),uhd.pointerUSRP,rxGain,0,"");
+	ccall((:uhd_usrp_set_rx_gain, libUHD), Cvoid, (Ptr{uhd_usrp}, Cdouble, Csize_t, Cstring),uhd.pointerUSRP,gain,0,"");
 	# Get the updated gain from UHD 
 	pointerGain	  = Ref{Cdouble}(0);
 	ccall((:uhd_usrp_get_rx_gain, libUHD), Cvoid, (Ptr{uhd_usrp}, Csize_t, Cstring,Ref{Cdouble}),uhd.pointerUSRP,0,"",pointerGain);
 	updateGain	  = pointerGain[]; 
 	# --- Print a flag 
-	if updateGain != rxGain 
-		@warn "Effective gain is $(updateGain) dB and not $(rxGain) dB\n" 
+	if updateGain != gain 
+		@warn "Effective gain is $(updateGain) dB and not $(gain) dB\n" 
 	else 
 		@info "Effective gain is $(updateGain) dB\n";
 	end 
@@ -307,7 +307,7 @@ function updateGain!(radio::RadioRx,gain)
 	# ---------------------------------------------------- 
 	# --- Sampling rate configuration  
 	# ---------------------------------------------------- 
-	@info  "Try to change gain from $(radio.rxGain) dB to $(gain) dB";
+	@info  "Try to change gain from $(radio.gain) dB to $(gain) dB";
 	# Update the UHD sampling rate 
 	ccall((:uhd_usrp_set_rx_gain, libUHD), Cvoid, (Ptr{uhd_usrp}, Cdouble, Csize_t, Cstring),radio.uhd.pointerUSRP,gain,0,"");
 	# Get the updated gain from UHD 
@@ -320,7 +320,7 @@ function updateGain!(radio::RadioRx,gain)
 	else 
 		@info "Effective gain is $(updateGain) dB\n";
 	end 
-	radio.rxGain = updateGain;
+	radio.gain = updateGain;
 	return updateGain;
 end
 
