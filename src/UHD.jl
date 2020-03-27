@@ -79,5 +79,36 @@ export updateCarrierFreq!
 export print; 
 export close;
 
+""" 
+--- 
+Init the core parameter of the radio in Tx or in Rx mode and initiate RF parameters 
+--- Syntax 
+open(mode,sysImage,carrierFreq,samplingRate,txGain,antenna="TX/RX")
+# --- Input parameters 
+- mode 			: String to open radio in "Tx" (transmitter) or in "Rx" (receive) mode
+- sysImage	  : String with the additionnal load parameters (for instance, path to the FPHGA image) [String]
+- carrierFreq	: Desired Carrier frequency [Union{Int,Float64}] 
+- samplingRate	: Desired bandwidth [Union{Int,Float64}] 
+- txGain		: Desired Tx Gain [Union{Int,Float64}] 
+- antenna		: Desired Antenna alias [String] (default "TX/RX");
+# --- Output parameters 
+- RadioTx		  	: UHD Tx object with PHY parameters [RadioTx]  
+# --- 
+# v 1.0 - Robin Gerzaguet.
+""" 
+function open(mode::String,sysImage, carrierFreq, samplingRate, txGain, antenna = "TX/RX")
+	if mode == "Tx" 
+		# --- Open radio in Tx mode 
+		 radio 	 = setTxRadio(sysImage, carrierFreq, samplingRate, txGain, antenna);
+	elseif mode == "Rx" 
+		# --- Open radio in Rx mode 
+		 radio 	 = setRxRadio(sysImage, carrierFreq, samplingRate, txGain, antenna);
+	else 
+		@error "Unknown mode for radio config. First parameter should be Tx or Rx (String)".
+	end
+	return radio;
+end
+export open
+
 
 end # module
