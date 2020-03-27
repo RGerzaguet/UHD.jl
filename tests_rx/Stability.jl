@@ -74,7 +74,7 @@ function mainFFT(radio,samplingRate,nbSamples)
 		# --- Create the radio object in function
 		carrierFreq		= 770e6;		
 		rxGain			= 50.0; 
-		radio			= setRxRadio("",carrierFreq,samplingRate,rxGain); 
+		radio			= open("Rx","",carrierFreq,samplingRate,rxGain); 
 		toRelease		= true;
 	else 
 		# --- Call from a method that have degined radio 
