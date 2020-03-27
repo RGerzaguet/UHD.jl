@@ -83,7 +83,7 @@ end
 --- 
 Init the core parameter of the radio in Tx mode and initiate RF parameters 
 --- Syntax 
-setTxRadio(sysImage,carrierFreq,samplingRate,gain,antenna="TX/RX")
+openRadioTx(sysImage,carrierFreq,samplingRate,gain,antenna="TX/RX")
 # --- Input parameters 
 - sysImage	  : String with the additionnal load parameters (for instance, path to the FPHGA image) [String]
 - carrierFreq	: Desired Carrier frequency [Union{Int,Float64}] 
@@ -95,7 +95,7 @@ setTxRadio(sysImage,carrierFreq,samplingRate,gain,antenna="TX/RX")
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function setTxRadio(sysImage, carrierFreq, samplingRate, gain, antenna = "TX/RX")
+function openRadioTx(sysImage, carrierFreq, samplingRate, gain, antenna = "TX/RX")
 	# ---------------------------------------------------- 
 	# --- Init  UHD object  
 	# ---------------------------------------------------- 

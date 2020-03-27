@@ -52,7 +52,7 @@ include("Rx.jl");
 export UHDRxWrapper
 # Export functions 
 export initRxUHD; 
-export setRxRadio;
+export openRadioRx;
 export recv,recv!;
 export populateBuffer!
 export getError, getTimestamp
@@ -67,7 +67,7 @@ include("Tx.jl");
 export UHDTxWrapper;
 # Export functions 
 export initTxUHD; 
-export setTxRadio;
+export openRadioTx;
 export send;
 # ---------------------------------------------------- 
 # --- Common functions and structures   
@@ -95,13 +95,13 @@ open(mode,sysImage,carrierFreq,samplingRate,txGain,antenna="TX/RX")
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """ 
-function Base.open(mode::String,sysImage, carrierFreq, samplingRate, txGain, antenna = "TX/RX")
+function openRadio(mode::String,sysImage, carrierFreq, samplingRate, txGain, antenna = "TX/RX")
 	if mode == "Tx" 
 		# --- Open radio in Tx mode 
-		 radio 	 = setTxRadio(sysImage, carrierFreq, samplingRate, txGain, antenna);
+		 radio 	 = openRadioTx(sysImage, carrierFreq, samplingRate, txGain, antenna);
 	elseif mode == "Rx" 
 		# --- Open radio in Rx mode 
-		 radio 	 = setRxRadio(sysImage, carrierFreq, samplingRate, txGain, antenna);
+		 radio 	 = openRadioRx(sysImage, carrierFreq, samplingRate, txGain, antenna);
 	else 
 		@error "Unknown mode for radio config. First parameter should be Tx or Rx (String)";
 	end
