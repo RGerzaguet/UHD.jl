@@ -347,10 +347,11 @@ function updateCarrierFreq!(radio::RadioRx,carrierFreq)
 	pointerTuneResult	  = Ref{uhd_tune_result}();	
 	ccall((:uhd_usrp_set_rx_freq, libUHD), Cvoid, (Ptr{uhd_usrp}, Ptr{uhd_tune_request_t}, Csize_t, Ptr{uhd_tune_result}),radio.uhd.pointerUSRP,tunePointer,0,pointerTuneResult);
 	pointerCarrierFreq = Ref{Cdouble}(0);
+	sleep(0.001);
 	ccall((:uhd_usrp_get_rx_freq, libUHD), Cvoid, (Ptr{uhd_usrp}, Csize_t, Ref{Cdouble}),radio.uhd.pointerUSRP,0,pointerCarrierFreq); 
 	updateCarrierFreq	= pointerCarrierFreq[];
 	if updateCarrierFreq != carrierFreq 
-		@warn "Effective carrier frequency is $(updateCarrierFreq/1e6) MHz and not $(carrierFreq/1e6) Hz\n" 
+		@warn "Effective carrier frequency is $(updateCarrierFreq/1e6) MHz and not $(carrierFreq/1e6) MHz\n" 
 	else 
 		@info "Effective carrier frequency is $(updateCarrierFreq/1e6) MHz\n";
 	end	
@@ -460,9 +461,11 @@ function populateBuffer!(radio,ptr,nbSamples::Csize_t=0)
 	end 
 	#@assert nbSamples <= length(buffer.x) "Number of desired samples can not be greater than buffer size";
 	# --- Effectively recover data
-	ccall((:uhd_rx_streamer_recv, libUHD), Cvoid,(Ptr{uhd_rx_streamer},Ptr{Ptr{Cvoid}},Csize_t,Ptr{Ptr{uhd_rx_metadata}},Cfloat,Cint,Ref{Csize_t}),radio.uhd.pointerStreamer,ptr,nbSamples,radio.uhd.addressMD,1,false,radio.uhd.pointerSamples);
+	# ccall((:uhd_rx_streamer_recv, libUHD), Cvoid,(Ptr{uhd_rx_streamer},Ptr{Ptr{Cvoid}},Csize_t,Ptr{Ptr{uhd_rx_metadata}},Cfloat,Cint,Ref{Csize_t}),radio.uhd.pointerStreamer,ptr,nbSamples,radio.uhd.addressMD,0.1,false,radio.uhd.pointerSamples);
+	pointerSamples = Ref{Csize_t}(0);
+	ccall((:uhd_rx_streamer_recv, libUHD), Cvoid,(Ptr{uhd_rx_streamer},Ptr{Ptr{Cvoid}},Csize_t,Ptr{Ptr{uhd_rx_metadata}},Cfloat,Cint,Ref{Csize_t}),radio.uhd.pointerStreamer,ptr,nbSamples,radio.uhd.addressMD,0.1,false,pointerSamples);
 		# --- Pointer deferencing 
-	return radio.uhd.pointerSamples[];
+	return pointerSamples[];
 end#
 
 
@@ -505,4 +508,3 @@ function getTimestamp(radio::RadioRx)
 	ccall( (:uhd_rx_metadata_time_spec,libUHD), Cvoid, (Ptr{uhd_rx_metadata},Ref{FORMAT_LONG},Ref{Cdouble}),radio.uhd.pointerMD,ptrFullSec,ptrFracSec);
 	return (ptrFullSec[],ptrFracSec[]);
 end
-
