@@ -139,10 +139,10 @@ end
 
 function processing!(out,sig,internal,P)
 	# --- Plan FFT 
-	# mul!(internal,P,sig);
+	mul!(internal,P,sig);
 	# --- |.|^2 
-	# out .= abs2.(internal);
-	return abs2.(fft(sig));
+	out .= abs2.(internal);
+	# return abs2.(fft(sig));
 end
 
 
