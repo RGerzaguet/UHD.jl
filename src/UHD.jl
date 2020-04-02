@@ -107,7 +107,7 @@ function openRadio(mode::String,sysImage, carrierFreq, samplingRate, txGain, ant
 	end
 	return radio;
 end
-export open;
+export openRadio;
 
 
 end # module
