@@ -15,6 +15,12 @@ function getRate(tInit,tFinal,nbSamples)
 	return nbSamples / timing / 1e6;
 end
 
+function getRateII(tInit,tFinal,nbSamples)
+	timing = tFinal - tInit; 
+	return nbSamples / timing / 1e6;
+end
+
+
 struct Res 
 	carrierFreq::Float64;
 	gain::Float64;	
@@ -27,9 +33,9 @@ export Res
 
 # Setting max piority to avoid CPU congestion 
 function setMaxPiority();
-pid = getpid();
-run(`renice -n -20 -p $pid`);
-run(`chrt -p 99 $pid`)
+	pid = getpid();
+	run(`renice -n -20 -p $pid`);
+	run(`chrt -p 99 $pid`)
 end 
 
 
@@ -40,13 +46,12 @@ function main()
 	carrierFreq		= 770e6;		
 	samplingRate	= 8e6; 
 	gain			= 50.0; 
-	nbSamples		= 1000;
 
 	# --- Setting a very first configuration 
 	global radio = openRadioRx("",carrierFreq,samplingRate,gain); 
 	print(radio);
 	# --- Get samples 
-	nbSamples = 4096; 
+	nbSamples = 1016;
 	sig		  = zeros(Complex{Cfloat},nbSamples); 
 	cnt		  = 0;
 	try 
@@ -74,7 +79,8 @@ function mainFFT(radio,samplingRate,nbSamples)
 		# --- Create the radio object in function
 		carrierFreq		= 770e6;		
 		gain			= 50.0; 
-		radio			= open("Rx","",carrierFreq,samplingRate,gain); 
+		radio			= openRadio("Rx","",carrierFreq,samplingRate,gain); 
+		updateSamplingRate!(radio,samplingRate);
 		toRelease		= true;
 	else 
 		# --- Call from a method that have degined radio 
@@ -84,41 +90,46 @@ function mainFFT(radio,samplingRate,nbSamples)
 		updateSamplingRate!(radio,samplingRate);
 	end
 	print(radio);
+	sleep(0.5);
 	# --- Get samples 
 	sig		  = zeros(Complex{Cfloat},nbSamples); 
-	out		  = zeros(Complex{Cfloat},nbSamples); 
-	P		  = plan_fft(sig;flags=FFTW.PATIENT);
+	out		  = zeros(Cfloat,nbSamples); 
+	internal  = zeros(Complex{Cfloat},nbSamples); 
 	nS		  = Csize_t(0);
-	nbBuffer  = Int(samplingRate);
+	nbBuffer  = Csize_t(2*samplingRate);
 	# --- Pre-processing 
-	recv!(sig,radio);
-	processing!(sig,out,P);
+	p = recv!(sig,radio);
+	P = plan_fft(sig;flags=FFTW.MEASURE);
+	processing!(out,sig,internal,P);
 	# --- Timestamp init 
 	p = recv!(sig,radio);
-	processing!(sig,out,P);
+	processing!(out,sig,internal,P);
 	# --- MEtrics 
 	nS		+= p;
-	timeInit  = Timestamp(getTimestamp(radio)...);
+	# timeInit  = Timestamp(getTimestamp(radio)...);
+	timeInit  = time();
 	while true
 		# --- Direct call to avoid allocation 
 		p = recv!(sig,radio);
 		# --- Apply processing method
-		processing!(sig,out,P);
-		# ---  Ensure packet is OK
+		processing!(out,sig,internal,P);
+		# --- Ensure packet is OK
 		# --- Update counter
 		nS		+= p;
 		# --- Before releasing buffer, we need a valid received system to have a valid timeStamp
-		err = getError(radio);
 		# --- Interruption 
-		if nS > nbBuffer  && err == UHD.ERROR_CODE_NONE 
-			break 
+		if nS > nbBuffer
+			if getError(radio) == UHD.ERROR_CODE_NONE 
+				break 
+			end
 		end
 	end
 	# --- Last timeStamp and rate 
-	timeFinal = Timestamp(getTimestamp(radio)...);
+	# timeFinal = Timestamp(getTimestamp(radio)...);
+	timeFinal = time();
 	# --- Getting effective rate 
 	radioRate	  = radio.samplingRate;
-	effectiveRate = getRate(timeInit, timeFinal, nS);
+	effectiveRate = getRateII(timeInit, timeFinal, nS);
 	# --- Free all and return
 	if toRelease 
 		close(radio);
@@ -126,11 +137,12 @@ function mainFFT(radio,samplingRate,nbSamples)
 	return (radioRate,effectiveRate);
 end
 
-function processing!(sig,out,P)
+function processing!(out,sig,internal,P)
 	# --- Plan FFT 
-	mul!(out,P,sig);
+	# mul!(internal,P,sig);
 	# --- |.|^2 
-	sig .= abs2.(out);
+	# out .= abs2.(internal);
+	return abs2.(fft(sig));
 end
 
 
@@ -140,9 +152,10 @@ function bench()
 	# --- Configuration
 	carrierFreq		= 770e6;		
 	gain			= 50.0; 
-	rateVect	= [1e3;100e3;500e3;1e6:1e6:16e6];
+	rateVect	= [1e3;100e3;500e3;1e6:1e6:8e6;16e6];
 	fftVect		= [64;128;256;512;1016;1024;2048;2*1016;4*1016];
-	# fftVect		= [1024]
+	# fftVect		= [32768];
+	# fftVect		= [4096];
 	# fftVect		= [1016;2*1016;4*1016];
 	benchPerf	= zeros(Float64,length(fftVect),length(rateVect));
 	radioRate	= zeros(Float64,length(rateVect));
