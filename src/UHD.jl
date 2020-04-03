@@ -29,7 +29,8 @@ else
 			# For E310 device, TimeStamp is a Int32 and Clonglong is mapped as a 64 bit word.
 			const FORMAT_LONG = Int32;
 		else 
-			const libUHD = "/usr/lib/x86_64-linux-gnu/libuhd.so.3.14.1";
+			const libUHD = "libuhd"
+			#const libUHD = "/usr/lib/x86_64-linux-gnu/libuhd.so.3.14.1";
 			const FORMAT_LONG = Clonglong;
 		 end
 	end
