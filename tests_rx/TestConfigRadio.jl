@@ -1,4 +1,4 @@
-module TestConfigRadio 
+module TestConfigUHD 
 # ---------------------------------------------------- 
 # --- Modules  
 # ---------------------------------------------------- 
@@ -20,7 +20,7 @@ function main()
 	@printf("done -- \n");
 
 	# --- Setting a very first configuration 
-	global radio = openRadioRx("",carrierFreq,samplingRate,gain); 
+	global radio = openUHDRx("",carrierFreq,samplingRate,gain); 
 	print(radio);
 	  
 	# --- Update configuration 

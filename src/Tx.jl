@@ -22,7 +22,7 @@ mutable struct UHDTxWrapper
 	addressStream::Ref{Ptr{uhd_tx_streamer}};
 	addressMD::Ref{Ptr{uhd_tx_metadata}};
 end 
-mutable struct RadioTx 
+mutable struct UHDTx 
 	uhd::UHDTxWrapper;
 	carrierFreq::Float64;
 	samplingRate::Float64;
@@ -83,7 +83,7 @@ end
 --- 
 Init the core parameter of the radio in Tx mode and initiate RF parameters 
 --- Syntax 
-openRadioTx(sysImage,carrierFreq,samplingRate,gain,antenna="TX/RX")
+openUHDTx(sysImage,carrierFreq,samplingRate,gain,antenna="TX/RX")
 # --- Input parameters 
 - sysImage	  : String with the additionnal load parameters (for instance, path to the FPHGA image) [String]
 - carrierFreq	: Desired Carrier frequency [Union{Int,Float64}] 
@@ -91,11 +91,11 @@ openRadioTx(sysImage,carrierFreq,samplingRate,gain,antenna="TX/RX")
 - gain		: Desired Tx Gain [Union{Int,Float64}] 
 - antenna		: Desired Antenna alias [String] (default "TX/RX");
 # --- Output parameters 
-- RadioTx		  	: UHD Tx object with PHY parameters [RadioTx]  
+- UHDTx		  	: UHD Tx object with PHY parameters [UHDTx]  
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function openRadioTx(sysImage, carrierFreq, samplingRate, gain, antenna = "TX/RX")
+function openUHDTx(sysImage, carrierFreq, samplingRate, gain, antenna = "TX/RX")
 	# ---------------------------------------------------- 
 	# --- Init  UHD object  
 	# ---------------------------------------------------- 
@@ -174,7 +174,7 @@ function openRadioTx(sysImage, carrierFreq, samplingRate, gain, antenna = "TX/RX
 	# --- Create object and return  
 	# ---------------------------------------------------- 
 	# --- Return  
-	return RadioTx(uhd, updateCarrierFreq, updateRate, updateGain, antenna, nbSamples, 0);
+	return UHDTx(uhd, updateCarrierFreq, updateRate, updateGain, antenna, nbSamples, 0);
 end
 
 
@@ -184,13 +184,13 @@ Close the USRP device (Tx mode) and release all associated objects
 # --- Syntax 
 #	close(uhd)
 # --- Input parameters 
-- uhd	: UHD object [RadioTx]
+- uhd	: UHD object [UHDTx]
 # --- Output parameters 
 - []
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function Base.close(radio::RadioTx)
+function Base.close(radio::UHDTx)
 	# --- Checking realease nature 
 	# There is one flag to avoid double free (that leads to seg fault) 
 	if radio.released == 0
@@ -209,7 +209,7 @@ end
 
 
 
-function Base.print(radio::RadioTx)
+function Base.print(radio::UHDTx)
 	# Get the gain from UHD 
 	pointerGain	  = Ref{Cdouble}(0);
 	ccall((:uhd_usrp_get_tx_gain, libUHD), Cvoid, (Ptr{Cvoid}, Csize_t, Cstring, Ref{Cdouble}), radio.uhd.pointerUSRP, 0, "", pointerGain);
@@ -224,7 +224,7 @@ function Base.print(radio::RadioTx)
 	updateFreq	  = pointerFreq[];
 	# Print message 
 	strF  = @sprintf(" Carrier Frequency: %2.3f MHz\n Sampling Frequency: %2.3f MHz\n Tx Gain: %2.2f dB\n",updateFreq / 1e6,updateRate / 1e6,updateGain);
-	@info "Current Radio Configuration in Tx mode\n$strF"; 
+	@info "Current UHD Configuration in Tx mode\n$strF"; 
 end
 
 """ 
@@ -233,14 +233,14 @@ Update sampling rate of current radio device, and update radio object with the n
 --- Syntax 
 updateSamplingRate!(radio,samplingRate)
 # --- Input parameters 
-- radio	  : Radio device [RadioTx]
+- radio	  : UHD device [UHDTx]
 - samplingRate	: New desired sampling rate 
 # --- Output parameters 
 - 
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function updateSamplingRate!(radio::RadioTx, samplingRate)
+function updateSamplingRate!(radio::UHDTx, samplingRate)
 	# ---------------------------------------------------- 
 	# --- Sampling rate configuration  
 	# ---------------------------------------------------- 
@@ -267,14 +267,14 @@ Update gain of current radio device, and update radio object with the new obtain
 --- Syntax 
 updateGain!(radio,gain)
 # --- Input parameters 
-- radio	  : Radio device [RadioTx]
+- radio	  : UHD device [UHDTx]
 - gain	: New desired gain 
 # --- Output parameters 
 - 
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function updateGain!(radio::RadioTx, gain)
+function updateGain!(radio::UHDTx, gain)
 	# ---------------------------------------------------- 
 	# --- Sampling rate configuration  
 	# ---------------------------------------------------- 
@@ -300,14 +300,14 @@ Update carrier frequency of current radio device, and update radio object with t
 --- Syntax 
   updateCarrierFreq!(radio,carrierFreq)
 # --- Input parameters 
-- radio	  : Radio device [RadioRx]
+- radio	  : UHD device [UHDRx]
 - carrierFreq	: New desired carrier freq 
 # --- Output parameters 
 - carrierFreq 	: Current radio carrier frequency 
 # --- 
 # v 1.0
 """
-function updateCarrierFreq!(radio::RadioTx, carrierFreq)
+function updateCarrierFreq!(radio::UHDTx, carrierFreq)
 	# ---------------------------------------------------- 
 	# --- Carrier Frequency configuration  
 	# ---------------------------------------------------- 
@@ -333,7 +333,7 @@ Send a buffer though the radio device. It is possible to force a cyclic buffer s
 --- Syntax 
 	send(radio,buffer,cyclic=false)
 # --- Input parameters 
-- radio	  	: Radio device [RadioRx]
+- radio	  	: UHD device [UHDRx]
 - buffer 	: Buffer to be send [Union{Array{Complex{Cfloat}},Array{Cfloat}}] 
 - cyclic 	: Send same buffer multiple times (default false) [Bool]
 # --- Output parameters 
@@ -341,7 +341,7 @@ Send a buffer though the radio device. It is possible to force a cyclic buffer s
 # --- 
 # v 1.0
 """
-function send(radio::RadioTx, buffer::Union{Array{Complex{Cfloat}},Array{Cfloat}}, cyclic::Bool = false)
+function send(radio::UHDTx, buffer::Union{Array{Complex{Cfloat}},Array{Cfloat}}, cyclic::Bool = false)
 	# --- Global pointer 
 	ptr				= Ref(Ptr{Cvoid}(pointer(buffer)));
 	# --- Pointer to number of samples transmitted 

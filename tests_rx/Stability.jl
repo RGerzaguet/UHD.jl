@@ -8,6 +8,12 @@ using Printf
 using UHD 
 using LinearAlgebra 
 
+"""
+---
+Calculate rate based on timestamp
+# ---
+# v 1.0 - Robin Gerzaguet.
+"""
 function getRate(tInit,tFinal,nbSamples)
 	sDeb = tInit.intPart + tInit.fracPart;
 	sFin = tFinal.intPart + tFinal.fracPart; 
@@ -15,6 +21,12 @@ function getRate(tInit,tFinal,nbSamples)
 	return nbSamples / timing / 1e6;
 end
 
+"""
+---
+Calculate rate based on Julia time() command
+# ---
+# v 1.0 - Robin Gerzaguet.
+"""
 function getRateII(tInit,tFinal,nbSamples)
 	timing = tFinal - tInit; 
 	return nbSamples / timing / 1e6;
@@ -48,7 +60,7 @@ function main()
 	gain			= 50.0; 
 
 	# --- Setting a very first configuration 
-	global radio = openRadioRx("",carrierFreq,samplingRate,gain); 
+	global radio = openUHDRx("",carrierFreq,samplingRate,gain); 
 	print(radio);
 	# --- Get samples 
 	nbSamples = 1016;
@@ -79,12 +91,12 @@ function mainFFT(radio,samplingRate,nbSamples)
 		# --- Create the radio object in function
 		carrierFreq		= 770e6;		
 		gain			= 50.0; 
-		radio			= openRadio("Rx","",carrierFreq,samplingRate,gain); 
+		radio			= openUHD("Rx","",carrierFreq,samplingRate,gain); 
 		updateSamplingRate!(radio,samplingRate);
 		toRelease		= true;
 	else 
 		# --- Call from a method that have degined radio 
-		# Radio will be released there
+		# UHD will be released there
 		toRelease = false;
 		# --- We only have to update carrier frequency 
 		updateSamplingRate!(radio,samplingRate);
@@ -99,7 +111,7 @@ function mainFFT(radio,samplingRate,nbSamples)
 	nbBuffer  = Csize_t(2*samplingRate);
 	# --- Pre-processing 
 	p = recv!(sig,radio);
-	P = plan_fft(sig;flags=FFTW.MEASURE);
+	P = plan_fft(sig;flags=FFTW.PATIENT);
 	processing!(out,sig,internal,P);
 	# --- Timestamp init 
 	p = recv!(sig,radio);
@@ -160,7 +172,7 @@ function bench()
 	benchPerf	= zeros(Float64,length(fftVect),length(rateVect));
 	radioRate	= zeros(Float64,length(rateVect));
 	# --- Setting a very first configuration 
-	radio = openRadioRx("",carrierFreq,1e6,gain); 
+	radio = openUHDRx("",carrierFreq,1e6,gain); 
 	for (iR,targetRate) in enumerate(rateVect)
 		for (iN,fftSize) in enumerate(fftVect)
 			# --- Calling method 

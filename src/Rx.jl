@@ -30,7 +30,7 @@ struct UHDRxWrapper
 	pointerSamples::Ref{Csize_t}
 end 
 
-mutable struct RadioRx 
+mutable struct UHDRx 
 	uhd::UHDRxWrapper;
 	carrierFreq::Float64;
 	samplingRate::Float64;
@@ -95,7 +95,7 @@ end
 --- 
 Init the core parameter of the radio (Rx mode) and initiate RF parameters 
 --- Syntax 
-openRadioRx(sysImage,carrierFreq,samplingRate,gain,antenna="TX/RX")
+openUHDRx(sysImage,carrierFreq,samplingRate,gain,antenna="TX/RX")
 # --- Input parameters 
 - sysImage	  : String with the additionnal load parameters (for instance, path to the FPHGA image) [String]
 - carrierFreq	: Desired Carrier frequency [Union{Int,Float64}] 
@@ -103,11 +103,11 @@ openRadioRx(sysImage,carrierFreq,samplingRate,gain,antenna="TX/RX")
 - gain		: Desired Rx Gain [Union{Int,Float64}] 
 - antenna		: Desired Antenna alias [String] (default "TX/RX");
 # --- Output parameters 
-- RadioRx		  	: UHD Rx object with PHY parameters [RadioRx]  
+- UHDRx		  	: UHD Rx object with PHY parameters [UHDRx]  
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function openRadioRx(sysImage,carrierFreq,samplingRate,gain,antenna="RX2")
+function openUHDRx(sysImage,carrierFreq,samplingRate,gain,antenna="RX2")
 	# ---------------------------------------------------- 
 	# --- Init  UHD object  
 	# ---------------------------------------------------- 
@@ -191,7 +191,7 @@ function openRadioRx(sysImage,carrierFreq,samplingRate,gain,antenna="RX2")
 	# --- Create object and return  
 	# ---------------------------------------------------- 
 	# --- Return  
-	return RadioRx(uhd,updateCarrierFreq,updateRate,updateGain,antenna,nbSamples,0);
+	return UHDRx(uhd,updateCarrierFreq,updateRate,updateGain,antenna,nbSamples,0);
 end
 
 """ 
@@ -200,13 +200,13 @@ Close the USRP device (Rx mode) and release all associated objects
 # --- Syntax 
 #	close(uhd)
 # --- Input parameters 
-- uhd	: UHD object [RadioRx]
+- uhd	: UHD object [UHDRx]
 # --- Output parameters 
 - []
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function Base.close(radio::RadioRx)
+function Base.close(radio::UHDRx)
 	# --- Checking realease nature 
 	# There is one flag to avoid double close (that leads to seg fault) 
 	if radio.released == 0
@@ -229,7 +229,7 @@ end
 --- 
 Print the radio configuration 
 # --- Syntax 
-#	printRadio(radio)
+#	printUHD(radio)
 # --- Input parameters 
 - radio		: UHD object (Tx or Rx)
 # --- Output parameters 
@@ -237,7 +237,7 @@ Print the radio configuration
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function Base.print(radio::RadioRx)
+function Base.print(radio::UHDRx)
 	# Get the gain from UHD 
 	pointerGain	  = Ref{Cdouble}(0);
 	ccall((:uhd_usrp_get_rx_gain, libUHD), Cvoid, (Ptr{Cvoid}, Csize_t, Cstring,Ref{Cdouble}),radio.uhd.pointerUSRP,0,"",pointerGain);
@@ -252,7 +252,7 @@ function Base.print(radio::RadioRx)
 	updateFreq	  = pointerFreq[];
 	# Print message 
 	strF  = @sprintf(" Carrier Frequency: %2.3f MHz\n Sampling Frequency: %2.3f MHz\n Rx Gain: %2.2f dB\n",updateFreq/1e6,updateRate/1e6,updateGain);
-	@info "Current Radio Configuration in Rx mode\n$strF"; 
+	@info "Current UHD Configuration in Rx mode\n$strF"; 
 end
 
 
@@ -262,14 +262,14 @@ Update sampling rate of current radio device, and update radio object with the n
 --- Syntax 
   updateSamplingRate!(radio,samplingRate)
 # --- Input parameters 
-- radio	  : Radio device [RadioRx]
+- radio	  : UHD device [UHDRx]
 - samplingRate	: New desired sampling rate 
 # --- Output parameters 
 - 
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function updateSamplingRate!(radio::RadioRx,samplingRate)
+function updateSamplingRate!(radio::UHDRx,samplingRate)
 	# ---------------------------------------------------- 
 	# --- Sampling rate configuration  
 	# ---------------------------------------------------- 
@@ -296,14 +296,14 @@ Update gain of current radio device, and update radio object with the new obtain
 --- Syntax 
   updateGain!(radio,gain)
 # --- Input parameters 
-- radio	  : Radio device [RadioRx]
+- radio	  : UHD device [UHDRx]
 - gain	: New desired gain 
 # --- Output parameters 
 - gain 	: Current radio gain
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function updateGain!(radio::RadioRx,gain)
+function updateGain!(radio::UHDRx,gain)
 	# ---------------------------------------------------- 
 	# --- Sampling rate configuration  
 	# ---------------------------------------------------- 
@@ -330,14 +330,14 @@ Update carrier frequency of current radio device, and update radio object with t
 --- Syntax 
   updateCarrierFreq!(radio,carrierFreq)
 # --- Input parameters 
-- radio	  : Radio device [RadioRx]
+- radio	  : UHD device [UHDRx]
 - carrierFreq	: New desired carrier freq 
 # --- Output parameters 
 - carrierFreq 	: Current radio carrier frequency 
 # --- 
 # v 1.0
 """
-function updateCarrierFreq!(radio::RadioRx,carrierFreq)
+function updateCarrierFreq!(radio::UHDRx,carrierFreq)
 	# ---------------------------------------------------- 
 	# --- Carrier Frequency configuration  
 	# ---------------------------------------------------- 
@@ -365,7 +365,7 @@ Get a single buffer from the USRP device, and create all the necessary ressource
 # --- Syntax 
 	sig	  = recv(radio,nbSamples)
 # --- Input parameters 
-- radio	  : Radio object [RadioRx]
+- radio	  : UHD object [UHDRx]
 - nbSamples : Desired number of samples [Int]
 # --- Output parameters 
 - sig	  : baseband signal from radio [Array{Complex{CFloat}},radio.packetSize]
@@ -389,14 +389,14 @@ Get a single buffer from the USRP device, using the Buffer structure
 	recv!(sig,radio,nbSamples)
 # --- Input parameters 
 - sig	  : Complex signal to populate [Array{Complex{Cfloat}}]
-- radio	  : Radio object [RadioRx]
+- radio	  : UHD object [UHDRx]
 - buffer  : Buffer object [Buffer] (obtained with setBuffer(radio))
 # --- Output parameters 
 - sig	  : baseband signal from radio [Array{Complex{Cfloat}},radio.packetSize]
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function recv!(sig,radio::RadioRx;nbSamples=0,offset=0)
+function recv!(sig,radio::UHDRx;nbSamples=0,offset=0)
 	# --- Defined parameters for multiple buffer reception 
 	filled		= false;
 	# --- Fill the input buffer @ a specific offset 
@@ -445,7 +445,7 @@ Calling UHD function wrapper to fill a buffer
 # --- Syntax 
 	recv!(sig,radio,nbSamples)
 # --- Input parameters 
-- radio	  	: Radio object [RadioRx]
+- radio	  	: UHD object [UHDRx]
 - ptr  		: Writable memory position [Ref{Ptr{Cvoid}}]
 - nbSamples : Number of samples to acquire 
 # --- Output parameters 
@@ -476,13 +476,13 @@ Returns the Error flag of the current UHD burst
 --- Syntax 
 flag = getError(radio)
 # --- Input parameters 
-- radio : UHD object [RadioRx]
+- radio : UHD object [UHDRx]
 # --- Output parameters 
 - err	: Error Flag [error_code_t]
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function getError(radio::RadioRx)
+function getError(radio::UHDRx)
 	ptrErr = Ref{error_code_t}();
 	ccall((:uhd_rx_metadata_error_code,libUHD), Cvoid,(Ptr{uhd_rx_metadata},Ref{error_code_t}),radio.uhd.pointerMD,ptrErr);
 	return err = ptrErr[];
@@ -495,14 +495,14 @@ Return the timestamp of the last UHD burst
 --- Syntax 
 (second,fracSecond) = getTimestamp(radio)
 # --- Input parameters 
-- radio	  : UHD Radio object [RadioRx]
+- radio	  : UHD UHD object [UHDRx]
 # --- Output parameters 
 - second  : Second value for the flag [Int]
 - fracSecond : Fractional second value [Float64]
 # --- 
 # v 1.0 - Robin Gerzaguet.
 """
-function getTimestamp(radio::RadioRx)
+function getTimestamp(radio::UHDRx)
 	ptrFullSec = Ref{FORMAT_LONG}();
 	ptrFracSec = Ref{Cdouble}();
 	ccall( (:uhd_rx_metadata_time_spec,libUHD), Cvoid, (Ptr{uhd_rx_metadata},Ref{FORMAT_LONG},Ref{Cdouble}),radio.uhd.pointerMD,ptrFullSec,ptrFracSec);
