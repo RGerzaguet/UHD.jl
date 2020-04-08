@@ -25,18 +25,12 @@ For instance, in order to get 4096 samples at 868MHz with a instantaneous bandwi
 		# The first parameter is to tune the Rx board
 		# The second parameter is for specific parameter (FPGA bitstream, IP address)
 		radio	= openUHD("Rx","",carrierFreq,samplingRate,rxGain);
-		try 
-				# --- Display the current radio configuration
-				print(radio);
-				# --- Getting a buffe from the radio 
-				sig	= recv(radio,nbSamples);
-				# --- Release the radio ressources
-				freeRadio(radio); 
-		catch exception;
-			@printf("Releasing UHD ressources \n");
-			close(radio); 
-			rethrow(exception);
-		end
+		# --- Display the current radio configuration
+		print(radio);
+		# --- Getting a buffer from the radio 
+		sig	= recv(radio,nbSamples);
+		# --- Release the radio ressources
+		close(radio); 
 	end
 
 
