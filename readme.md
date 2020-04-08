@@ -3,11 +3,11 @@
 
 ## Purpose 
 
-This simple package proposes some bindings to the UHD, the C driver of the Universal Software Radio Peripheral [USRP](https://files.ettus.com/manual/) 
+This package proposes some bindings to UHD, the C driver of the Universal Software Radio Peripheral [USRP](https://files.ettus.com/manual/) 
 
 The purpose is to able to see the radio peripheral inside a Julia session and to be able to send and receive complex samples direclty within a Julia session. 
 
-For instance, in order to get 4096 samples at 868MHz with a instantaneous bandwidth of 16MHz, with a 30dB Rx Gain, the following Julia code should do the trick. 
+For instance, in order to get 4096 samples at 868MHz with a instantaneous bandwidth of 16MHz, with a 30dB Rx Gain, the following Julia code will do the trick. 
 
 	function main()
 		# ---------------------------------------------------- 
@@ -22,18 +22,19 @@ For instance, in order to get 4096 samples at 868MHz with a instantaneous bandwi
 		# --- Getting all system with function calls  
 		# ---------------------------------------------------- 
 		# --- Creating the radio ressource 
-		# The first parameter is for specific parameter (FPGA bitstream, IP address)
-		radio	= setRxRadio("",carrierFreq,samplingRate,rxGain);
+		# The first parameter is to tune the Rx board
+		# The second parameter is for specific parameter (FPGA bitstream, IP address)
+		radio	= openUHD("Rx","",carrierFreq,samplingRate,rxGain);
 		try 
 				# --- Display the current radio configuration
-				printRxConfig(radio);
+				print(radio);
 				# --- Getting a buffe from the radio 
-				sigAll	= getBuffer(radio,nbSamples);
+				sig	= recv(radio,nbSamples);
 				# --- Release the radio ressources
 				freeRadio(radio); 
 		catch exception;
 			@printf("Releasing UHD ressources \n");
-			freeRadio(radio); 
+			close(radio); 
 			rethrow(exception);
 		end
 	end
