@@ -1,4 +1,10 @@
+<div align="center">
+<img src="docs/src/assets/logo.png" alt="UHD.jl" width="380">
+</div>
+
 # UHD.jl
+
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://rgerzaguet.github.io/UHD.jl/stable/index.html)
 
 
 ## Purpose 
