@@ -13,10 +13,10 @@ For instance, in order to get 4096 samples at 868MHz with a instantaneous bandwi
 		# ---------------------------------------------------- 
 		# --- Physical layer and RF parameters 
 		# ---------------------------------------------------- 
-		carrierFreq		= 868e6;	    % --- The carrier frequency 	
-		samplingRate	= 16e6;         % --- Targeted bandwdith 
-		rxGain			= 30.0;         % --- Rx gain 
-		nbSamples		= 4096;         % --- Desired number of samples
+		carrierFreq	= 868e6; 	% --- The carrier frequency (Hz)	
+		samplingRate	= 16e6;         % --- Targeted bandwidth (Hz)
+		rxGain		= 30.0;         % --- Rx gain (dB)
+		nbSamples	= 4096;         % --- Desired number of samples
 	
 		# ---------------------------------------------------- 
 		# --- Getting all system with function calls  
