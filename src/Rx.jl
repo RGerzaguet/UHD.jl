@@ -213,9 +213,9 @@ function Base.close(radio::UHDRx)
 		# print("\n");
 		# @info "Catch exception, release UHD related ressources"
 		# C Wrapper to ressource release 
-		@assert_uhd  ccall((:uhd_usrp_free, libUHD), uhd_error, (Ptr{Ptr{uhd_usrp}},),radio.uhd.addressUSRP);
 		@assert_uhd ccall((:uhd_rx_streamer_free, libUHD), uhd_error, (Ptr{Ptr{uhd_rx_streamer}},),radio.uhd.addressStream);
 		@assert_uhd ccall((:uhd_rx_metadata_free, libUHD), uhd_error, (Ptr{Ptr{uhd_rx_metadata}},),radio.uhd.addressMD);
+		@assert_uhd  ccall((:uhd_usrp_free, libUHD), uhd_error, (Ptr{Ptr{uhd_usrp}},),radio.uhd.addressUSRP);
 		print("\n");
 		@info "USRP device is now closed.";
 	else 
