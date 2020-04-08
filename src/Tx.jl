@@ -34,16 +34,15 @@ end
 
 
 """ 
---- 
 Initiate all structures to instantiate and pilot a USRP device in Transmitter (Tx) mode.
---- Syntax 
+
+# --- Syntax 
+
 uhd	  = initTxUHD(sysImage)
 # --- Input parameters 
 - sysImage	  : String with the additionnal load parameters (for instance, path to the FPHGA image) [String]
 # --- Output parameters 
 - uhd		  = UHD Tx object [UHDTxWrapper] 
-# --- 
-# v 1.0 - Robin Gerzaguet.
 """
 function initTxUHD(sysImage)
 	# ---------------------------------------------------- 
@@ -80,22 +79,21 @@ function initTxUHD(sysImage)
 end
 
 """ 
---- 
 Init the core parameter of the radio in Tx mode and initiate RF parameters 
---- Syntax 
-openUHDTx(sysImage,carrierFreq,samplingRate,gain,antenna="TX/RX")
+
+# --- Syntax 
+
+openUHDTx(sysImage,carrierFreq,samplingRate,gain,antenna="TX-RX")
 # --- Input parameters 
 - sysImage	  : String with the additionnal load parameters (for instance, path to the FPHGA image) [String]
 - carrierFreq	: Desired Carrier frequency [Union{Int,Float64}] 
 - samplingRate	: Desired bandwidth [Union{Int,Float64}] 
 - gain		: Desired Tx Gain [Union{Int,Float64}] 
-- antenna		: Desired Antenna alias [String] (default "TX/RX");
+- antenna		: Desired Antenna alias (default "TX-RX") [String] 
 # --- Output parameters 
 - UHDTx		  	: UHD Tx object with PHY parameters [UHDTx]  
-# --- 
-# v 1.0 - Robin Gerzaguet.
 """
-function openUHDTx(sysImage, carrierFreq, samplingRate, gain, antenna = "TX/RX")
+function openUHDTx(sysImage, carrierFreq, samplingRate, gain, antenna = "TX-RX")
 	# ---------------------------------------------------- 
 	# --- Init  UHD object  
 	# ---------------------------------------------------- 
@@ -179,16 +177,15 @@ end
 
 
 """ 
---- 
 Close the USRP device (Tx mode) and release all associated objects
+
 # --- Syntax 
-#	close(uhd)
+
+close(uhd)
 # --- Input parameters 
 - uhd	: UHD object [UHDTx]
 # --- Output parameters 
 - []
-# --- 
-# v 1.0 - Robin Gerzaguet.
 """
 function Base.close(radio::UHDTx)
 	# --- Checking realease nature 
@@ -228,17 +225,16 @@ function Base.print(radio::UHDTx)
 end
 
 """ 
---- 
 Update sampling rate of current radio device, and update radio object with the new obtained sampling frequency  
---- Syntax 
+
+# --- Syntax 
+
 updateSamplingRate!(radio,samplingRate)
 # --- Input parameters 
 - radio	  : UHD device [UHDTx]
 - samplingRate	: New desired sampling rate 
 # --- Output parameters 
 - 
-# --- 
-# v 1.0 - Robin Gerzaguet.
 """
 function updateSamplingRate!(radio::UHDTx, samplingRate)
 	# ---------------------------------------------------- 
@@ -262,17 +258,16 @@ end
 
 
 """ 
---- 
 Update gain of current radio device, and update radio object with the new obtained  gain
---- Syntax 
+
+# --- Syntax 
+
 updateGain!(radio,gain)
 # --- Input parameters 
 - radio	  : UHD device [UHDTx]
 - gain	: New desired gain 
 # --- Output parameters 
-- 
-# --- 
-# v 1.0 - Robin Gerzaguet.
+- updateGain : Current Radio gain [Float64]
 """
 function updateGain!(radio::UHDTx, gain)
 	# ---------------------------------------------------- 
@@ -292,13 +287,15 @@ function updateGain!(radio::UHDTx, gain)
 		@info "Effective gain is $(updateGain) dB\n";
 	end 
 	radio.gain = updateGain;
+	return updateGain;
 end
 
 """ 
---- 
 Update carrier frequency of current radio device, and update radio object with the new obtained carrier frequency 
---- Syntax 
-  updateCarrierFreq!(radio,carrierFreq)
+
+# --- Syntax 
+
+updateCarrierFreq!(radio,carrierFreq)
 # --- Input parameters 
 - radio	  : UHD device [UHDRx]
 - carrierFreq	: New desired carrier freq 
@@ -325,13 +322,15 @@ function updateCarrierFreq!(radio::UHDTx, carrierFreq)
 		@info "Effective carrier frequency is $(updateCarrierFreq / 1e6) MHz\n";
 	end	
 	radio.carrierFreq = updateCarrierFreq;
+	return updateCarrierFreq;
 end
 
 """ 
---- 
 Send a buffer though the radio device. It is possible to force a cyclic buffer send (the radio uninterruply send the same buffer) by setting the cyclic parameter to true
---- Syntax 
-	send(radio,buffer,cyclic=false)
+
+# --- Syntax 
+
+send(radio,buffer,cyclic=false)
 # --- Input parameters 
 - radio	  	: UHD device [UHDRx]
 - buffer 	: Buffer to be send [Union{Array{Complex{Cfloat}},Array{Cfloat}}] 

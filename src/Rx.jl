@@ -43,16 +43,16 @@ end
 
 
 """ 
---- 
+
 Initiate all structures to instantiate and pilot a USRP device into Receiver mode (Rx).
---- Syntax 
+
+# --- Syntax 
+
 uhd	  = initRxUHD(sysImage)
 # --- Input parameters 
 - sysImage	  : String with the additionnal load parameters (for instance, path to the FPHGA image) [String]
 # --- Output parameters 
 - uhd		  = UHD Rx object [UHDRxWrapper] 
-# --- 
-# v 1.0 - Robin Gerzaguet.
 """
 function initRxUHD(sysImage)
 	# ---------------------------------------------------- 
@@ -92,22 +92,21 @@ end
 
 
 """ 
---- 
 Init the core parameter of the radio (Rx mode) and initiate RF parameters 
---- Syntax 
-openUHDRx(sysImage,carrierFreq,samplingRate,gain,antenna="TX/RX")
+
+# --- Syntax 
+
+openUHDRx(sysImage,carrierFreq,samplingRate,gain,antenna="TX-RX")
 # --- Input parameters 
 - sysImage	  : String with the additionnal load parameters (for instance, path to the FPHGA image) [String]
 - carrierFreq	: Desired Carrier frequency [Union{Int,Float64}] 
 - samplingRate	: Desired bandwidth [Union{Int,Float64}] 
 - gain		: Desired Rx Gain [Union{Int,Float64}] 
-- antenna		: Desired Antenna alias [String] (default "TX/RX");
+- antenna		: Desired Antenna alias  (default "TX-RX") [String]
 # --- Output parameters 
 - UHDRx		  	: UHD Rx object with PHY parameters [UHDRx]  
-# --- 
-# v 1.0 - Robin Gerzaguet.
 """
-function openUHDRx(sysImage,carrierFreq,samplingRate,gain,antenna="RX2")
+function openUHDRx(sysImage,carrierFreq,samplingRate,gain,antenna="RX2";uhdArgs="");
 	# ---------------------------------------------------- 
 	# --- Init  UHD object  
 	# ---------------------------------------------------- 
@@ -120,7 +119,7 @@ function openUHDRx(sysImage,carrierFreq,samplingRate,gain,antenna="RX2")
 	channel		   =  Ref{Csize_t}(0);
 	a1			   =  Base.unsafe_convert(Cstring,"fc32");
 	a2			   =  Base.unsafe_convert(Cstring,"sc16");
-	a3			   =  Base.unsafe_convert(Cstring,"");
+	a3			   =  Base.unsafe_convert(Cstring,uhdArgs);
 	uhdArgs		   = uhd_stream_args_t(a1,a2,a3,channel,1);
 	# ---------------------------------------------------- 
 	# --- Sampling rate configuration  
@@ -195,16 +194,15 @@ function openUHDRx(sysImage,carrierFreq,samplingRate,gain,antenna="RX2")
 end
 
 """ 
---- 
 Close the USRP device (Rx mode) and release all associated objects
+
 # --- Syntax 
-#	close(uhd)
+
+close(uhd)
 # --- Input parameters 
 - uhd	: UHD object [UHDRx]
 # --- Output parameters 
 - []
-# --- 
-# v 1.0 - Robin Gerzaguet.
 """
 function Base.close(radio::UHDRx)
 	# --- Checking realease nature 
@@ -227,16 +225,15 @@ function Base.close(radio::UHDRx)
 end
 
 """ 
---- 
 Print the radio configuration 
+
 # --- Syntax 
-#	printUHD(radio)
+
+printUHD(radio)
 # --- Input parameters 
 - radio		: UHD object (Tx or Rx)
 # --- Output parameters 
 - []
-# --- 
-# v 1.0 - Robin Gerzaguet.
 """
 function Base.print(radio::UHDRx)
 	# Get the gain from UHD 
@@ -258,17 +255,16 @@ end
 
 
 """ 
---- 
 Update sampling rate of current radio device, and update radio object with the new obtained sampling frequency  
---- Syntax 
-  updateSamplingRate!(radio,samplingRate)
+
+# --- Syntax 
+
+updateSamplingRate!(radio,samplingRate)
 # --- Input parameters 
 - radio	  : UHD device [UHDRx]
 - samplingRate	: New desired sampling rate 
 # --- Output parameters 
 - 
-# --- 
-# v 1.0 - Robin Gerzaguet.
 """
 function updateSamplingRate!(radio::UHDRx,samplingRate)
 	# ---------------------------------------------------- 
@@ -292,17 +288,16 @@ end
 
 
 """ 
---- 
 Update gain of current radio device, and update radio object with the new obtained  gain
---- Syntax 
-  updateGain!(radio,gain)
+
+# --- Syntax 
+
+updateGain!(radio,gain)
 # --- Input parameters 
 - radio	  : UHD device [UHDRx]
 - gain	: New desired gain 
 # --- Output parameters 
 - gain 	: Current radio gain
-# --- 
-# v 1.0 - Robin Gerzaguet.
 """
 function updateGain!(radio::UHDRx,gain)
 	# ---------------------------------------------------- 
@@ -326,10 +321,11 @@ function updateGain!(radio::UHDRx,gain)
 end
 
 """ 
---- 
 Update carrier frequency of current radio device, and update radio object with the new obtained carrier frequency 
---- Syntax 
-  updateCarrierFreq!(radio,carrierFreq)
+
+# --- Syntax 
+
+updateCarrierFreq!(radio,carrierFreq)
 # --- Input parameters 
 - radio	  : UHD device [UHDRx]
 - carrierFreq	: New desired carrier freq 
@@ -361,17 +357,16 @@ function updateCarrierFreq!(radio::UHDRx,carrierFreq)
 end
 
 """ 
---- 
 Get a single buffer from the USRP device, and create all the necessary ressources
+
 # --- Syntax 
-	sig	  = recv(radio,nbSamples)
+
+sig	  = recv(radio,nbSamples)
 # --- Input parameters 
 - radio	  : UHD object [UHDRx]
 - nbSamples : Desired number of samples [Int]
 # --- Output parameters 
 - sig	  : baseband signal from radio [Array{Complex{CFloat}},radio.packetSize]
-# --- 
-# v 1.0 - Robin Gerzaguet.
 """
 function recv(radio,nbSamples);
 	# --- Create the global container 
@@ -384,18 +379,17 @@ end
 
 
 """ 
---- 
 Get a single buffer from the USRP device, using the Buffer structure 
+
 # --- Syntax 
-	recv!(sig,radio,nbSamples)
+
+recv!(sig,radio,nbSamples)
 # --- Input parameters 
 - sig	  : Complex signal to populate [Array{Complex{Cfloat}}]
 - radio	  : UHD object [UHDRx]
-- buffer  : Buffer object [Buffer] (obtained with setBuffer(radio))
+- buffer  : Buffer object (obtained with setBuffer(radio)) [Buffer] 
 # --- Output parameters 
 - sig	  : baseband signal from radio [Array{Complex{Cfloat}},radio.packetSize]
-# --- 
-# v 1.0 - Robin Gerzaguet.
 """
 function recv!(sig,radio::UHDRx;nbSamples=0,offset=0)
 	# --- Defined parameters for multiple buffer reception 
@@ -441,18 +435,17 @@ end
 
 
 """ 
---- 
 Calling UHD function wrapper to fill a buffer 
+
 # --- Syntax 
-	recv!(sig,radio,nbSamples)
+
+recv!(sig,radio,nbSamples)
 # --- Input parameters 
 - radio	  	: UHD object [UHDRx]
 - ptr  		: Writable memory position [Ref{Ptr{Cvoid}}]
 - nbSamples : Number of samples to acquire 
 # --- Output parameters 
 - nbSamp 	: Number of samples fill in buffer [Csize_t]
-# --- 
-# v 1.0 - Robin Gerzaguet.
 """
 function populateBuffer!(radio,ptr,nbSamples::Csize_t=0)
 	# --- Getting number of samples 
@@ -472,16 +465,15 @@ end#
 
 
 """ 
---- 
 Returns the Error flag of the current UHD burst 
---- Syntax 
+
+# --- Syntax 
+
 flag = getError(radio)
 # --- Input parameters 
 - radio : UHD object [UHDRx]
 # --- Output parameters 
 - err	: Error Flag [error_code_t]
-# --- 
-# v 1.0 - Robin Gerzaguet.
 """
 function getError(radio::UHDRx)
 	ptrErr = Ref{error_code_t}();
@@ -491,17 +483,16 @@ end
 
 
 """ 
---- 
 Return the timestamp of the last UHD burst 
---- Syntax 
+
+# --- Syntax 
+
 (second,fracSecond) = getTimestamp(radio)
 # --- Input parameters 
 - radio	  : UHD UHD object [UHDRx]
 # --- Output parameters 
 - second  : Second value for the flag [Int]
 - fracSecond : Fractional second value [Float64]
-# --- 
-# v 1.0 - Robin Gerzaguet.
 """
 function getTimestamp(radio::UHDRx)
 	ptrFullSec = Ref{FORMAT_LONG}();

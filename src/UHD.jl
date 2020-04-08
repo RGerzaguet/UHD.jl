@@ -80,23 +80,22 @@ export print;
 export close;
 
 """ 
---- 
 Init the core parameter of the radio in Tx or in Rx mode and initiate RF parameters 
---- Syntax 
-open(mode,sysImage,carrierFreq,samplingRate,txGain,antenna="TX/RX")
+
+# --- Syntax 
+
+open(mode,sysImage,carrierFreq,samplingRate,txGain,antenna="RX2")
 # --- Input parameters 
 - mode 			: String to open radio in "Tx" (transmitter) or in "Rx" (receive) mode
 - sysImage	  : String with the additionnal load parameters (for instance, path to the FPHGA image) [String]
 - carrierFreq	: Desired Carrier frequency [Union{Int,Float64}] 
 - samplingRate	: Desired bandwidth [Union{Int,Float64}] 
 - txGain		: Desired Tx Gain [Union{Int,Float64}] 
-- antenna		: Desired Antenna alias [String] (default "TX/RX");
+- antenna		: Desired Antenna alias [String]
 # --- Output parameters 
-- UHDTx		  	: UHD Tx object with PHY parameters [UHDTx]  
-# --- 
-# v 1.0 - Robin Gerzaguet.
+- UHDTx		  	: UHD Tx or Rx object with PHY parameters [Union{UHDTx,UHDRx}]  
 """ 
-function openUHD(mode::String,sysImage, carrierFreq, samplingRate, txGain, antenna = "TX/RX")
+function openUHD(mode::String,sysImage, carrierFreq, samplingRate, txGain, antenna = "RX2")
 	if mode == "Tx" 
 		# --- Open radio in Tx mode 
 		 radio 	 = openUHDTx(sysImage, carrierFreq, samplingRate, txGain, antenna);
