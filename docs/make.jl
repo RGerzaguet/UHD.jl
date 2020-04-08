@@ -17,5 +17,5 @@ makedocs(sitename="UHD.jl",
 #makedocs(sitename="My Documentation", format = Documenter.HTML(prettyurls = false))
 
 deploydocs(
-    repo = "github.com/RGerzaguet/uhd.jl",
+    repo = "github.com/RGerzaguet/UHD.jl",
 )
