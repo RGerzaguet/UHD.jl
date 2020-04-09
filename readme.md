@@ -58,4 +58,4 @@ julia> import Pkg; Pkg.add("UHD")
 
 ## Documentation
 
-- [**STABLE**](https://img.shields.io/badge/docs-stable-blue.svg)](https://rgerzaguet.github.io/UHD.jl/dev/index.html) &mdash; **documentation of the most recently tagged version.**
+- [**STABLE**](https://rgerzaguet.github.io/UHD.jl/dev/index.html) &mdash; **documentation of the most recently tagged version.**
