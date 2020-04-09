@@ -193,66 +193,6 @@ function openUHDRx(sysImage,carrierFreq,samplingRate,gain,antenna="RX2";uhdArgs=
 	return UHDRx(uhd,updateCarrierFreq,updateRate,updateGain,antenna,nbSamples,0);
 end
 
-""" 
-Close the USRP device (Rx mode) and release all associated objects
-
-# --- Syntax 
-
-close(uhd)
-# --- Input parameters 
-- uhd	: UHD object [UHDRx]
-# --- Output parameters 
-- []
-"""
-function Base.close(radio::UHDRx)
-	# --- Checking realease nature 
-	# There is one flag to avoid double close (that leads to seg fault) 
-	if radio.released == 0
-		# print("\n");
-		# @info "Catch exception, release UHD related ressources"
-		# C Wrapper to ressource release 
-		@assert_uhd ccall((:uhd_rx_streamer_free, libUHD), uhd_error, (Ptr{Ptr{uhd_rx_streamer}},),radio.uhd.addressStream);
-		@assert_uhd ccall((:uhd_rx_metadata_free, libUHD), uhd_error, (Ptr{Ptr{uhd_rx_metadata}},),radio.uhd.addressMD);
-		@assert_uhd  ccall((:uhd_usrp_free, libUHD), uhd_error, (Ptr{Ptr{uhd_usrp}},),radio.uhd.addressUSRP);
-		print("\n");
-		@info "USRP device is now closed.";
-	else 
-		# print a warning  
-		@warn "UHD ressource was already released, abort call";
-	end 
-	# --- Force flag value 
-	radio.released = 1;
-end
-
-""" 
-Print the radio configuration 
-
-# --- Syntax 
-
-printUHD(radio)
-# --- Input parameters 
-- radio		: UHD object (Tx or Rx)
-# --- Output parameters 
-- []
-"""
-function Base.print(radio::UHDRx)
-	# Get the gain from UHD 
-	pointerGain	  = Ref{Cdouble}(0);
-	ccall((:uhd_usrp_get_rx_gain, libUHD), Cvoid, (Ptr{Cvoid}, Csize_t, Cstring,Ref{Cdouble}),radio.uhd.pointerUSRP,0,"",pointerGain);
-	updateGain	  = pointerGain[]; 
-	# Get the rate from UHD 
-	pointerRate	  = Ref{Cdouble}(0);
-	ccall((:uhd_usrp_get_rx_rate, libUHD), Cvoid, (Ptr{Cvoid}, Csize_t, Ref{Cdouble}),radio.uhd.pointerUSRP,0,pointerRate);
-	updateRate	  = pointerRate[]; 
-	# Get the freq from UHD 
-	pointerFreq	  = Ref{Cdouble}(0);
-	ccall((:uhd_usrp_get_rx_freq, libUHD), Cvoid, (Ptr{Cvoid}, Csize_t, Ref{Cdouble}),radio.uhd.pointerUSRP,0,pointerFreq);
-	updateFreq	  = pointerFreq[];
-	# Print message 
-	strF  = @sprintf(" Carrier Frequency: %2.3f MHz\n Sampling Frequency: %2.3f MHz\n Rx Gain: %2.2f dB\n",updateFreq/1e6,updateRate/1e6,updateGain);
-	@info "Current UHD Configuration in Rx mode\n$strF"; 
-end
-
 
 """ 
 Update sampling rate of current radio device, and update radio object with the new obtained sampling frequency  

@@ -84,7 +84,7 @@ Init the core parameter of the radio in Tx or in Rx mode and initiate RF paramet
 
 # --- Syntax 
 
-open(mode,sysImage,carrierFreq,samplingRate,txGain,antenna="RX2")
+openUHD(mode,sysImage,carrierFreq,samplingRate,txGain,antenna="RX2")
 # --- Input parameters 
 - mode 			: String to open radio in "Tx" (transmitter) or in "Rx" (receive) mode
 - sysImage	  : String with the additionnal load parameters (for instance, path to the FPHGA image) [String]
@@ -109,5 +109,97 @@ function openUHD(mode::String,sysImage, carrierFreq, samplingRate, txGain, anten
 end
 export openUHD;
 
+""" 
+Close the USRP device (Rx or Tx mode) and release all associated objects
+
+# --- Syntax 
+
+close(uhd)
+# --- Input parameters 
+- uhd	: UHD object [UHDRx,UHDTx]
+# --- Output parameters 
+- []
+"""
+function Base.close(radio::UHDRx)
+	# --- Checking realease nature 
+	# There is one flag to avoid double close (that leads to seg fault) 
+	if radio.released == 0
+		# print("\n");
+		# @info "Catch exception, release UHD related ressources"
+		# C Wrapper to ressource release 
+		@assert_uhd ccall((:uhd_rx_streamer_free, libUHD), uhd_error, (Ptr{Ptr{uhd_rx_streamer}},),radio.uhd.addressStream);
+		@assert_uhd ccall((:uhd_rx_metadata_free, libUHD), uhd_error, (Ptr{Ptr{uhd_rx_metadata}},),radio.uhd.addressMD);
+		@assert_uhd  ccall((:uhd_usrp_free, libUHD), uhd_error, (Ptr{Ptr{uhd_usrp}},),radio.uhd.addressUSRP);
+		print("\n");
+		@info "USRP device is now closed.";
+	else 
+		# print a warning  
+		@warn "UHD ressource was already released, abort call";
+	end 
+	# --- Force flag value 
+	radio.released = 1;
+end
+function Base.close(radio::UHDTx)
+	# --- Checking realease nature 
+	# There is one flag to avoid double free (that leads to seg fault) 
+	if radio.released == 0
+		# C Wrapper to ressource release 
+		@assert_uhd  ccall((:uhd_usrp_free, libUHD), uhd_error, (Ptr{Ptr{uhd_usrp}},), radio.uhd.addressUSRP);
+		@assert_uhd ccall((:uhd_tx_streamer_free, libUHD), uhd_error, (Ptr{Ptr{uhd_tx_streamer}},), radio.uhd.addressStream);
+		@assert_uhd ccall((:uhd_tx_metadata_free, libUHD), uhd_error, (Ptr{Ptr{uhd_tx_metadata}},), radio.uhd.addressMD);
+		@info "USRP device is now closed.";
+	else 
+		# print a warning  
+		@warn "UHD ressource was already released, abort call";
+	end 
+	# --- Force flag value 
+	radio.released = 1;
+end
+
+""" 
+Print the radio configuration 
+
+# --- Syntax 
+
+printUHD(radio)
+# --- Input parameters 
+- radio		: UHD object (Tx or Rx)
+# --- Output parameters 
+- []
+"""
+function Base.print(radio::UHDRx)
+	# Get the gain from UHD 
+	pointerGain	  = Ref{Cdouble}(0);
+	ccall((:uhd_usrp_get_rx_gain, libUHD), Cvoid, (Ptr{Cvoid}, Csize_t, Cstring,Ref{Cdouble}),radio.uhd.pointerUSRP,0,"",pointerGain);
+	updateGain	  = pointerGain[]; 
+	# Get the rate from UHD 
+	pointerRate	  = Ref{Cdouble}(0);
+	ccall((:uhd_usrp_get_rx_rate, libUHD), Cvoid, (Ptr{Cvoid}, Csize_t, Ref{Cdouble}),radio.uhd.pointerUSRP,0,pointerRate);
+	updateRate	  = pointerRate[]; 
+	# Get the freq from UHD 
+	pointerFreq	  = Ref{Cdouble}(0);
+	ccall((:uhd_usrp_get_rx_freq, libUHD), Cvoid, (Ptr{Cvoid}, Csize_t, Ref{Cdouble}),radio.uhd.pointerUSRP,0,pointerFreq);
+	updateFreq	  = pointerFreq[];
+	# Print message 
+	strF  = @sprintf(" Carrier Frequency: %2.3f MHz\n Sampling Frequency: %2.3f MHz\n Rx Gain: %2.2f dB\n",updateFreq/1e6,updateRate/1e6,updateGain);
+	@info "Current UHD Configuration in Rx mode\n$strF"; 
+end
+function Base.print(radio::UHDTx)
+	# Get the gain from UHD 
+	pointerGain	  = Ref{Cdouble}(0);
+	ccall((:uhd_usrp_get_tx_gain, libUHD), Cvoid, (Ptr{Cvoid}, Csize_t, Cstring, Ref{Cdouble}), radio.uhd.pointerUSRP, 0, "", pointerGain);
+	updateGain	  = pointerGain[]; 
+	# Get the rate from UHD 
+	pointerRate	  = Ref{Cdouble}(0);
+	ccall((:uhd_usrp_get_tx_rate, libUHD), Cvoid, (Ptr{Cvoid}, Csize_t, Ref{Cdouble}), radio.uhd.pointerUSRP, 0, pointerRate);
+	updateRate	  = pointerRate[]; 
+	# Get the freq from UHD 
+	pointerFreq	  = Ref{Cdouble}(0);
+	ccall((:uhd_usrp_get_tx_freq, libUHD), Cvoid, (Ptr{Cvoid}, Csize_t, Ref{Cdouble}), radio.uhd.pointerUSRP, 0, pointerFreq);
+	updateFreq	  = pointerFreq[];
+	# Print message 
+	strF  = @sprintf(" Carrier Frequency: %2.3f MHz\n Sampling Frequency: %2.3f MHz\n Tx Gain: %2.2f dB\n",updateFreq / 1e6,updateRate / 1e6,updateGain);
+	@info "Current UHD Configuration in Tx mode\n$strF"; 
+end
 
 end # module

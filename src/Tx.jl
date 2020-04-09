@@ -176,53 +176,6 @@ function openUHDTx(sysImage, carrierFreq, samplingRate, gain, antenna = "TX-RX")
 end
 
 
-""" 
-Close the USRP device (Tx mode) and release all associated objects
-
-# --- Syntax 
-
-close(uhd)
-# --- Input parameters 
-- uhd	: UHD object [UHDTx]
-# --- Output parameters 
-- []
-"""
-function Base.close(radio::UHDTx)
-	# --- Checking realease nature 
-	# There is one flag to avoid double free (that leads to seg fault) 
-	if radio.released == 0
-		# C Wrapper to ressource release 
-		@assert_uhd  ccall((:uhd_usrp_free, libUHD), uhd_error, (Ptr{Ptr{uhd_usrp}},), radio.uhd.addressUSRP);
-		@assert_uhd ccall((:uhd_tx_streamer_free, libUHD), uhd_error, (Ptr{Ptr{uhd_tx_streamer}},), radio.uhd.addressStream);
-		@assert_uhd ccall((:uhd_tx_metadata_free, libUHD), uhd_error, (Ptr{Ptr{uhd_tx_metadata}},), radio.uhd.addressMD);
-		@info "USRP device is now closed.";
-	else 
-		# print a warning  
-		@warn "UHD ressource was already released, abort call";
-	end 
-	# --- Force flag value 
-	radio.released = 1;
-end
-
-
-
-function Base.print(radio::UHDTx)
-	# Get the gain from UHD 
-	pointerGain	  = Ref{Cdouble}(0);
-	ccall((:uhd_usrp_get_tx_gain, libUHD), Cvoid, (Ptr{Cvoid}, Csize_t, Cstring, Ref{Cdouble}), radio.uhd.pointerUSRP, 0, "", pointerGain);
-	updateGain	  = pointerGain[]; 
-	# Get the rate from UHD 
-	pointerRate	  = Ref{Cdouble}(0);
-	ccall((:uhd_usrp_get_tx_rate, libUHD), Cvoid, (Ptr{Cvoid}, Csize_t, Ref{Cdouble}), radio.uhd.pointerUSRP, 0, pointerRate);
-	updateRate	  = pointerRate[]; 
-	# Get the freq from UHD 
-	pointerFreq	  = Ref{Cdouble}(0);
-	ccall((:uhd_usrp_get_tx_freq, libUHD), Cvoid, (Ptr{Cvoid}, Csize_t, Ref{Cdouble}), radio.uhd.pointerUSRP, 0, pointerFreq);
-	updateFreq	  = pointerFreq[];
-	# Print message 
-	strF  = @sprintf(" Carrier Frequency: %2.3f MHz\n Sampling Frequency: %2.3f MHz\n Tx Gain: %2.2f dB\n",updateFreq / 1e6,updateRate / 1e6,updateGain);
-	@info "Current UHD Configuration in Tx mode\n$strF"; 
-end
 
 """ 
 Update sampling rate of current radio device, and update radio object with the new obtained sampling frequency  
