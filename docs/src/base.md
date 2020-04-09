@@ -1,6 +1,6 @@
 
 
-## Common functions 
+# Common functions 
 
 ```@autodocs
 Modules = [UHD]
@@ -10,7 +10,7 @@ Depth	= 1
 ```
 
 
-## Receiver functions 
+# Receiver functions 
 
 ```@autodocs
 Modules = [UHD]
@@ -20,7 +20,7 @@ Depth	= 1
 ```
 
 
-## Transmitter functions 
+# Transmitter functions 
 
 ```@autodocs
 Modules = [UHD]
