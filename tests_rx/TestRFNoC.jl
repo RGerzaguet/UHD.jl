@@ -1,5 +1,4 @@
-
-module TestTx
+module TestRFNoC 
 # ---------------------------------------------------- 
 # --- Modules  
 # ---------------------------------------------------- 
@@ -7,31 +6,37 @@ module TestTx
 using FFTW 
 using Printf
 using UHD 
-using Random
+
 
 function main()	
 	# ---------------------------------------------------- 
 	# --- Physical layer and RF parameters 
 	# ---------------------------------------------------- 
 	carrierFreq		= 770e6;		
-	samplingRate	= 8e6; 
+	samplingRate	= 66e6; 
 	gain			= 50.0; 
 	nbSamples		= 1000;
-	# --- Setting a very first configuration 
-	global radio = openRadioTx(carrierFreq,samplingRate,gain); 
-	print(radio);
-	# --- Get samples 
-    buffer	= randn(Complex{Cfloat},radio.packetSize);
-    buffer	= randn(Cfloat,2*radio.packetSize);
 
-	nbEch	= send(radio,buffer,true)
-	#for iN = 1 : 1 : 1000
-	#nbEch = sendBuffer(radio,buffer);
-	#@show Int(nbEch);
-	#end
-	@show Int(nbEch);
+	@printf("done -- \n");
+
+	# --- Setting a very first configuration 
+	radio = openUHDRx(carrierFreq,samplingRate,gain,args="fpga=/home/root/rfnoc/fpgaImages/FPGA_image_FFT_fifo_DDC.bit"); 
+	# global radio = openUHDRx("",carrierFreq,samplingRate,gain); 
+	print(radio);
+	  
+	# --- Update configuration 
+	updateCarrierFreq!(radio,660e6);
+	updateSamplingRate!(radio,100e6);
+	updateGain!(radio,15);
+	print(radio);
+	
+	updateSamplingRate!(radio,16e6);
 	# --- Release USRP 
 	close(radio);
 end
+
+
+
+
 
 end

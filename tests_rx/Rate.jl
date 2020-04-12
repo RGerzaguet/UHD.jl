@@ -22,7 +22,7 @@ function testRate(samplingRate)
 	carrierFreq		= 770e6;		
 	gain			= 10.0; 
 	# --- Setting a very first configuration 
-	radio = openUHDRx("",carrierFreq,samplingRate,gain); 
+	radio = openUHDRx(carrierFreq,samplingRate,gain); 
 	print(radio);
 	# --- Get samples 
 	nbSamples = radio.packetSize;
@@ -61,7 +61,7 @@ function bench()
 	oRate	= zeros(Float64,length(tRate));
 	fRate	= zeros(Float64,length(tRate));
 	# --- Setting a very first configuration 
-	radio = openUHDRx("",carrierFreq,100e6,gain); 
+	radio = openUHDRx(carrierFreq,100e6,gain); 
 	for (i,r) in enumerate(tRate) 
 		updateSamplingRate!(radio,r);
 		print(radio);

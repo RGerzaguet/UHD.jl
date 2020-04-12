@@ -85,15 +85,16 @@ Init the core parameter of the radio in Tx mode and initiate RF parameters
 
 openUHDTx(sysImage,carrierFreq,samplingRate,gain,antenna="TX-RX")
 # --- Input parameters 
-- sysImage	  : String with the additionnal load parameters (for instance, path to the FPHGA image) [String]
 - carrierFreq	: Desired Carrier frequency [Union{Int,Float64}] 
 - samplingRate	: Desired bandwidth [Union{Int,Float64}] 
 - gain		: Desired Tx Gain [Union{Int,Float64}] 
 - antenna		: Desired Antenna alias (default "TX-RX") [String] 
+Keywords:
+- sysImage	  : String with the additionnal load parameters (for instance, path to the FPHGA image) [String]
 # --- Output parameters 
 - UHDTx		  	: UHD Tx object with PHY parameters [UHDTx]  
 """
-function openUHDTx(sysImage, carrierFreq, samplingRate, gain, antenna = "TX-RX")
+function openUHDTx(carrierFreq, samplingRate, gain, antenna = "TX-RX";args="")
 	# ---------------------------------------------------- 
 	# --- Init  UHD object  
 	# ---------------------------------------------------- 
