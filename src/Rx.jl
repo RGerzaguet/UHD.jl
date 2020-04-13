@@ -111,7 +111,7 @@ function openUHDRx(carrierFreq,samplingRate,gain,antenna="RX2";args="",uhdArgs="
 	# ---------------------------------------------------- 
 	# --- Init  UHD object  
 	# ---------------------------------------------------- 
-	uhd	  = initRxUHD(sysImage);
+	uhd	  = initRxUHD(args);
 	# ---------------------------------------------------- 
 	# --- Creating Runtime structures  
 	# ---------------------------------------------------- 

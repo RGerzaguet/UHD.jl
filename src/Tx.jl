@@ -98,7 +98,7 @@ function openUHDTx(carrierFreq, samplingRate, gain, antenna = "TX-RX";args="")
 	# ---------------------------------------------------- 
 	# --- Init  UHD object  
 	# ---------------------------------------------------- 
-	uhd	  = initTxUHD(sysImage);
+	uhd	  = initTxUHD(args);
 	# ---------------------------------------------------- 
 	# --- Creating Runtime structures  
 	# ---------------------------------------------------- 
