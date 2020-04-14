@@ -50,7 +50,7 @@ export Timestamp
 # All structures and functions for the Rx side 
 include("Rx.jl");
 # Structures 
-export UHDRxWrapper
+export UHDRx
 # Export functions 
 export initRxUHD; 
 export openUHDRx;
@@ -65,7 +65,7 @@ export getError, getTimestamp
 # All structures and functions for the Tx side 
 include("Tx.jl");
 # Structures 
-export UHDTxWrapper;
+export UHDTx
 # Export functions 
 export initTxUHD; 
 export openUHDTx;
