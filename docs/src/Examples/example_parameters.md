@@ -10,10 +10,10 @@ the radio parameters corresponds to the effective values of the radio.
 		# ---------------------------------------------------- 
 		# --- Physical layer and RF parameters 
 		# ---------------------------------------------------- 
-		carrierFreq	= 868e6; 	% --- The carrier frequency (Hz)	
-		samplingRate	= 16e6;         % --- Targeted bandwidth (Hz)
-		rxGain		= 30.0;         % --- Rx gain (dB)
-		nbSamples	= 4096;         % --- Desired number of samples
+		carrierFreq	= 868e6; 	# --- The carrier frequency (Hz)	
+		samplingRate	= 16e6;         # --- Targeted bandwidth (Hz)
+		rxGain		= 30.0;         # --- Rx gain (dB)
+		nbSamples	= 4096;         # --- Desired number of samples
 	
 		# ---------------------------------------------------- 
 		# --- Getting all system with function calls  
