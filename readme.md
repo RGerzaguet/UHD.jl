@@ -30,8 +30,7 @@ For instance, in order to get 4096 samples at 868MHz with a instantaneous bandwi
 		# ---------------------------------------------------- 
 		# --- Creating the radio ressource 
 		# The first parameter is to tune the Rx board
-		# The second parameter is for specific parameter (FPGA bitstream, IP address)
-		radio	= openUHD("Rx","",carrierFreq,samplingRate,rxGain);
+		radio	= openUHD("Rx",carrierFreq,samplingRate,rxGain);
 		# --- Display the current radio configuration
 		print(radio);
 		# --- Getting a buffer from the radio 
