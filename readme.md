@@ -1,3 +1,10 @@
+DEPRECIATED ---> THIS PACKAGE HAS BEEN TRASNFERED TO UHDBindings.jl [here](https://github.com/RGerzaguet/UHDBindings.jl)
+
+
+
+
+
+
 <div align="center">
 <img src="docs/src/assets/logo.png" alt="UHD.jl" width="380">
 </div>
